@@ -1,47 +1,107 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:localpkg/online.dart';
 import 'package:trafficlightsimulator/util.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class GamePage1 extends StatefulWidget {
-  const GamePage1({super.key});
+  final int mode; // 1: singleplayer; 2: multiplayer
+
+  const GamePage1({
+    super.key,
+    required this.mode
+  });
 
   @override
   State<GamePage1> createState() => _GamePage1State();
 }
 
 class _GamePage1State extends State<GamePage1> {
-  late WebSocket server;
+  Map data = {"await": "loading"};
+  late io.Socket server;
   final controller = StreamController.broadcast();
 
-  Future<Map> setup() async {
-    return {};
+  @override
+  void initState() {
+    super.initState();
+    if (widget.mode == 2) {
+      setup();
+    } else {
+      setupSingleplayer();
+    }
   }
 
-  /// connect to the WebSocket
-  Future<Map> connect(int port) async {
-    String url = "ws://$host:$port";
+  void refresh() {
+    setState(() {});
+  }
+
+  void setupSingleplayer() {
+    data = initialData();
+    refresh();
+  }
+
+  void setup() async {
+    Map dataS = await getServerJsonData("/api/services/trafficlightsimulator/new");
+    print("data: $dataS");
+    if (dataS.containsKey("error")) {
+      print("new match issue: ${dataS["error"]}");
+      data = {"error": getDesc(dataS["error"])};
+      refresh();
+      return;
+    }
+    String path = dataS["path"];
+    String code = dataS["code"];
+    data = await connect(path, code);
+    refresh();
+  }
+
+  Future<Map> connect(String path, String code) async {
+    String url = "http://$host:5000";
     try {
-      server = await WebSocket.connect(url);
-      server.listen((message) {
+      print("connecting at url $url$path");
+      server = io.io(
+        url,
+        io.OptionBuilder()
+          .setPath(path)
+          .setTransports(['websocket'])
+          .build(),
+      );
+      server.connect();
+
+      server.on('message', (message) {
         print("received message: $message");
-        Map data = jsonDecode(message);
-        if (data.containsKey("action")) {
-          String action = data["action"];
+        Map dataS = jsonDecode(message);
+        if (dataS.containsKey("action")) {
+          String action = dataS["action"];
           switch (action) {
             case 'no manager':
+              data = {"error": getDesc("no manager")};
               controller.add({"error": getDesc("no manager")});
+              refresh();
+            default:
+              data = {"error": "No data"};
+              controller.add({"error": "No data"});
+              refresh();
           }
         } else {
-          controller.add(data);
+          data = dataS;
+          controller.add(dataS);
+          refresh();
         }
-      }, onError: (error) {
+      });
+
+      server.on('error', (error) {
+        data = {"error": error};
         controller.addError(error);
-      }, onDone: () {
+        refresh();
+      });
+      
+      server.on('disconnect', (_) {
+        data = {"error": "Connection lost"};
         controller.close();
+        refresh();
       });
 
       print("waiting on first message...");
@@ -62,7 +122,7 @@ class _GamePage1State extends State<GamePage1> {
 
       final id = message["id"];
       print("id: $id");
-      return {"id": id};
+      return {"id": id, "code": code};
     } catch (e) {
       print("setup error: $e");
       return {"error": e};
@@ -72,5 +132,56 @@ class _GamePage1State extends State<GamePage1> {
   @override
   Widget build(BuildContext context) {
     print("building scaffold...");
+    if (data.containsKey("await")) {
+      return Scaffold(body: Center(child: CircularProgressIndicator()), appBar: AppBar(
+        toolbarHeight: 48.0,
+        leading: closeButton(context, null),
+      ));
+    } else if (data.containsKey("error")) {
+      return Scaffold(
+        body: Center(
+          child: Text("Error: ${getDesc(data["error"])}"),
+        ),
+      );
+    } else {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(mode == 1 ? "Singleplayer • Manager" : "Match: ${data["code"]} • ID: ${data["id"]} • Manager", style: TextStyle(
+            fontSize: 12
+          )),
+          centerTitle: true,
+          toolbarHeight: 48.0,
+          leading: closeButton(context, mode == 1 ? null : server),
+        ),
+        body: Center(
+          child: Column(
+            children: [
+              Section(child: Row(
+                children: [
+                  Column(
+                    children: [
+                      Light(color: Colors.red, active: true),
+                      Light(color: Colors.yellow, active: false),
+                      Light(color: Colors.green, active: false),
+                    ],
+                  ),
+                ],
+              )),
+              Section(child: Text("Controls")),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget Section({required Widget child}) {
+    return Expanded(
+      child: SingleChildScrollView(
+        child: Center(
+          child: child,
+        ),
+      ),
+    );
   }
 }

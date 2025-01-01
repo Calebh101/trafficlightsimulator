@@ -1,17 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:localpkg/online.dart';
 import 'package:trafficlightsimulator/util.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class GamePage2 extends StatefulWidget {
   final String code;
-  final int port;
+  final String path;
 
   const GamePage2({
     required this.code,
-    required this.port,
+    required this.path,
     super.key
   });
 
@@ -20,16 +21,25 @@ class GamePage2 extends StatefulWidget {
 }
 
 class _GamePage2State extends State<GamePage2> {
-  late WebSocket webSocket;
+  late io.Socket webSocket;
   final controller = StreamController.broadcast();
 
   /// connect to the WebSocket
   Future<Map> setup() async {
-    int port = widget.port;
-    String url = "ws://$host:$port";
+    String path = widget.path;
+    String url = "http://$host:5000";
     try {
-      webSocket = await WebSocket.connect(url);
-      webSocket.listen((message) {
+      print("connecting at url $url$path");
+      webSocket = io.io(
+        url,
+        io.OptionBuilder()
+          .setPath(path)
+          .setTransports(['websocket'])
+          .build(),
+      );
+      webSocket.connect();
+  
+      webSocket.on('message', (message) {
         print("received message: $message");
         Map data = jsonDecode(message);
         if (data.containsKey("action")) {
@@ -41,9 +51,14 @@ class _GamePage2State extends State<GamePage2> {
         } else {
           controller.add(data);
         }
-      }, onError: (error) {
+      });
+
+      webSocket.on('error', (error) {
         controller.addError(error);
-      }, onDone: () {
+      });
+
+      // Handle disconnection
+      webSocket.on('disconnect', (_) {
         controller.close();
       });
 
@@ -79,9 +94,10 @@ class _GamePage2State extends State<GamePage2> {
       future: setup(),
       builder: (BuildContext context, AsyncSnapshot<Map> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return Scaffold(body: Center(child: CircularProgressIndicator()), appBar: AppBar(
+            toolbarHeight: 48.0,
+            leading: closeButton(context, null),
+          ));
         } else if (snapshot.hasError) {
           return Scaffold(
             body: Center(child: Text("Error: ${snapshot.error}")),
@@ -123,7 +139,7 @@ class _GamePage2State extends State<GamePage2> {
                   builder: (context, snapshot) {
                     print("building stream...");
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator();
+                      return Text("Waiting...");
                     } else if (snapshot.hasError) {
                       print("snapshot error: ${snapshot.error}");
                       return Text("Error: ${snapshot.error}");
