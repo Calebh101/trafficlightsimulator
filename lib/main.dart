@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'Traffic Light Simulator',
       theme: brandTheme(
         darkMode: true,
         seedColor: Colors.black,

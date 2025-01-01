@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:localpkg/online.dart';
+import 'package:trafficlightsimulator/drawer.dart';
 import 'package:trafficlightsimulator/util.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -158,13 +159,7 @@ class _GamePage1State extends State<GamePage1> {
             children: [
               Section(child: Row(
                 children: [
-                  Column(
-                    children: [
-                      Light(color: Colors.red, active: true),
-                      Light(color: Colors.yellow, active: false),
-                      Light(color: Colors.green, active: false),
-                    ],
-                  ),
+                  Stoplight(),
                 ],
               )),
               Section(child: Text("Controls")),

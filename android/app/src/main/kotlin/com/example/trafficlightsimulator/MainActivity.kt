@@ -1,4 +1,4 @@
-package com.example.trafficlightsimulator
+package com.calebh101.trafficlightsimulator
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,1 +1,0 @@
-// home.dart contents have now been merged with main.dart

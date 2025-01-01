@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:trafficlightsimulator/drawer.dart';
+import 'package:trafficlightsimulator/main.dart';
 
 Widget buttonBlock(String text, VoidCallback action, {double width = 250, double height = 75}) {
   return Padding(
@@ -31,7 +31,10 @@ void closeDialogue(BuildContext context, io.Socket? server) async {
       server.close();
     }
     print("exiting...");
-    Navigator.of(context).pop();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomePage()),
+    );
   }
 }
 
@@ -182,8 +185,4 @@ Map initialData() {
       },
     },
   };
-}
-
-Widget Light({required Color color, required bool active}) {
-  return Circle(size: 40, color: color, filled: active);
 }
