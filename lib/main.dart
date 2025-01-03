@@ -15,7 +15,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -54,7 +53,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              buttonBlock("Create a Match", () {
+              buttonBlock("Create a Room", () {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => GamePage1(mode: 2)),
@@ -69,7 +68,7 @@ class _HomePageState extends State<HomePage> {
                       Flexible(
                         child: TextFormField(
                           decoration: InputDecoration(
-                            labelText: 'Join a Match',
+                            labelText: 'Join a Room',
                             border: OutlineInputBorder(),
                           ),
                           validator: (value) {
@@ -88,14 +87,14 @@ class _HomePageState extends State<HomePage> {
                         try {
                           if (formKey.currentState!.validate()) {
                             formKey.currentState!.save();
-                            showSnackBar(context, "Finding match...");
+                            showSnackBar(context, "Finding room...");
                             http.Response response = await getServerResponse("/api/services/trafficlightsimulator/join?id=$code");
                             Map? data = json.decode(response.body);
                             int status = response.statusCode;
                             print("received response: $response");
                             if (data != null && status == 200) {
                               String path = data["game"]["path"];
-                              showSnackBar(context, "Found match!");
+                              showSnackBar(context, "Found room!");
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(builder: (context) => GamePage2(code: code, path: path)),
@@ -133,4 +132,131 @@ class _HomePageState extends State<HomePage> {
   bool isValid(String input) {
     return input.length == 9 && RegExp(r'^[0-9]+$').hasMatch(input);
   }
+}
+
+Map initialData() {
+  return {
+    "items": [
+      {
+        "id": 1,
+        "items": [
+          {
+            "direction": -2,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": -1,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 0,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 1,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 2,
+            "active": 6,
+            "subactive": 6,
+          },
+        ],
+      },
+      {
+        "id": 2,
+        "items": [
+          {
+            "direction": -2,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": -1,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 0,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 1,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 2,
+            "active": 6,
+            "subactive": 6,
+          },
+        ],
+      },
+      {
+        "id": 3,
+        "items": [
+          {
+            "direction": -2,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": -1,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 0,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 1,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 2,
+            "active": 6,
+            "subactive": 6,
+          },
+        ],
+      },
+      {
+        "id": 4,
+        "items": [
+          {
+            "direction": -2,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": -1,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 0,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 1,
+            "active": 6,
+            "subactive": 6,
+          },
+          {
+            "direction": 2,
+            "active": 6,
+            "subactive": 6,
+          },
+        ],
+      },
+    ],
+  };
 }

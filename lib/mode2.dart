@@ -9,10 +9,12 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 class GamePage2 extends StatefulWidget {
   final String code;
   final String path;
+  final bool debug;
 
   const GamePage2({
     required this.code,
     required this.path,
+    this.debug = false,
     super.key
   });
 
@@ -20,11 +22,56 @@ class GamePage2 extends StatefulWidget {
   State<GamePage2> createState() => _GamePage2State();
 }
 
-class _GamePage2State extends State<GamePage2> {
+class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMixin {
   late io.Socket webSocket;
-  final controller = StreamController.broadcast();
+  late AnimationController animationController;
+  late Animation<double> animation;
+  StreamController? controller;
+  int id = 0;
 
-  /// connect to the WebSocket
+  void addEvent(dynamic event) {
+    try {
+      if (controller != null && !controller!.isClosed) {
+        print("adding controller event...");
+        controller?.add(event);
+      } else {
+        throw Exception("controller is either null or closed");
+      }
+    } catch (e) {
+      print("unable to add controller event: $e");
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    initializeController();
+
+    animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 500),
+    )..repeat(reverse: true);
+
+    animation = Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
+  }
+
+  @override
+  void dispose() {
+    animationController.dispose();
+    controller?.close();
+    super.dispose();
+  }
+
+  void initializeController() {
+    print("initializing controller...");
+    if (controller == null || controller!.isClosed) {
+      print("controller need initialized");
+      controller = StreamController.broadcast();
+    } else {
+      print("controller initialization skipped");
+    }
+  }
+
   Future<Map> setup() async {
     String path = widget.path;
     String url = "http://$host:5000";
@@ -46,24 +93,24 @@ class _GamePage2State extends State<GamePage2> {
           String action = data["action"];
           switch (action) {
             case 'no manager':
-              controller.add({"error": getDesc("no manager")});
+              addEvent({"error": getDesc("no manager")});
           }
         } else {
-          controller.add(data);
+          addEvent(data);
         }
       });
 
       webSocket.on('error', (error) {
-        controller.addError(error);
+        controller?.addError(error);
       });
 
       // Handle disconnection
       webSocket.on('disconnect', (_) {
-        controller.close();
+        controller?.close();
       });
 
       print("waiting on first message...");
-      final firstMessage = await controller.stream.first;
+      final firstMessage = await controller?.stream.first;
       Map message = {};
 
       if (firstMessage is Map) {
@@ -78,8 +125,9 @@ class _GamePage2State extends State<GamePage2> {
         return {"error": getDesc(message["error"])};
       }
 
-      final id = message["id"];
-      print("id: $id");
+      final idS = message["id"];
+      print("id: $idS");
+      id = idS;
       return {"id": id};
     } catch (e) {
       print("setup error: $e");
@@ -122,7 +170,7 @@ class _GamePage2State extends State<GamePage2> {
           } else {
             return Scaffold(
               appBar: AppBar(
-                title: Text("Match: ${widget.code} • ID: ${data["id"]}", style: TextStyle(
+                title: Text("Room: ${widget.code} • ID: $id", style: TextStyle(
                   fontSize: 12
                 )),
                 centerTitle: true,
@@ -135,7 +183,7 @@ class _GamePage2State extends State<GamePage2> {
               ),
               body: Center(
                 child: StreamBuilder(
-                  stream: controller.stream,
+                  stream: controller?.stream,
                   builder: (context, snapshot) {
                     print("building stream...");
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -153,10 +201,8 @@ class _GamePage2State extends State<GamePage2> {
                       return Text("Error: ${data["error"]}");
                     }
                 
-                    return Text(
-                      "Received: $data",
-                      style: TextStyle(fontSize: 18),
-                    );
+                    int index = id - 1;
+                    return Stoplights(align: false, showNumber: false, height: 100, width: 100, size: 40, data: data, item: data["items"][index], animation: animation, index: index);
                   },
                 ),
               ),
