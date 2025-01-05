@@ -3,18 +3,19 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:localpkg/online.dart';
+import 'package:trafficlightsimulator/main.dart';
 import 'package:trafficlightsimulator/util.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class GamePage2 extends StatefulWidget {
-  final String code;
-  final String path;
-  final bool debug;
+  final String? code;
+  final String? path;
+  final bool local;
 
   const GamePage2({
-    required this.code,
-    required this.path,
-    this.debug = false,
+    this.code,
+    this.path,
+    this.local = false,
     super.key
   });
 
@@ -28,6 +29,7 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
   late Animation<double> animation;
   StreamController? controller;
   int id = 0;
+  int debugId = 1;
 
   void addEvent(dynamic event) {
     try {
@@ -44,6 +46,7 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
 
   @override
   void initState() {
+    id = debugId;
     super.initState();
     initializeController();
 
@@ -72,66 +75,80 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
     }
   }
 
+  void delayData({required Map data, int milliseconds = 1000}) async {
+    print("delaying data for ${milliseconds}ms");
+    await Future.delayed(Duration(milliseconds: 500));
+    addEvent(data);
+    print("send delayed event: ${milliseconds}ms");
+  }
+
   Future<Map> setup() async {
-    String path = widget.path;
-    String url = "http://$host:5000";
-    try {
-      print("connecting at url $url$path");
-      webSocket = io.io(
-        url,
-        io.OptionBuilder()
-          .setPath(path)
-          .setTransports(['websocket'])
-          .build(),
-      );
-      webSocket.connect();
-  
-      webSocket.on('message', (message) {
-        print("received message: $message");
-        Map data = jsonDecode(message);
-        if (data.containsKey("action")) {
-          String action = data["action"];
-          switch (action) {
-            case 'no manager':
-              addEvent({"error": getDesc("no manager")});
+    if (widget.local) {
+      print("DEBUG: using local data");
+      Map data = initialData();
+      delayData(data: data);
+      return {"id": debugId};
+    } else {
+      String path = widget.path!;
+      String url = "http://$host:5000";
+      try {
+        print("connecting at url $url$path");
+        webSocket = io.io(
+          url,
+          io.OptionBuilder()
+            .setPath(path)
+            .setTransports(['websocket'])
+            .build(),
+        );
+        webSocket.connect();
+    
+        webSocket.on('message', (message) {
+          print("received message: $message");
+          Map data = jsonDecode(message);
+          if (data.containsKey("action")) {
+            String action = data["action"];
+            switch (action) {
+              case 'no manager':
+                addEvent({"error": getDesc("no manager")});
+            }
+          } else {
+            addEvent(data);
           }
+        });
+
+        webSocket.on('error', (error) {
+          controller?.addError(error);
+        });
+
+        // Handle disconnection
+        webSocket.on('disconnect', (_) {
+          controller?.close();
+        });
+
+        print("waiting on first message...");
+        final firstMessage = await controller?.stream.first;
+        Map message = {};
+
+        if (firstMessage is Map) {
+          message = firstMessage;
         } else {
-          addEvent(data);
+          message = jsonDecode(firstMessage);
         }
-      });
 
-      webSocket.on('error', (error) {
-        controller?.addError(error);
-      });
+        print("checking for errors...");
+        if (message.containsKey("error")) {
+          print("connection error: ${message["error"]}: ${getDesc(message["error"])}");
+          return {"error": getDesc(message["error"])};
+        }
 
-      // Handle disconnection
-      webSocket.on('disconnect', (_) {
-        controller?.close();
-      });
-
-      print("waiting on first message...");
-      final firstMessage = await controller?.stream.first;
-      Map message = {};
-
-      if (firstMessage is Map) {
-        message = firstMessage;
-      } else {
-        message = jsonDecode(firstMessage);
+        final idS = message["id"];
+        print("id: $idS");
+        id = idS;
+        return {"id": id};
+      } catch (e) {
+        print("setup error: $e");
+        return {"error": e};
       }
-
-      print("checking for errors...");
-      if (message.containsKey("error")) {
-        print("connection error: ${message["error"]}: ${getDesc(message["error"])}");
-        return {"error": getDesc(message["error"])};
-      }
-
-      final idS = message["id"];
-      print("id: $idS");
-      id = idS;
-      return {"id": id};
-    } catch (e) {
-      print("setup error: $e");
-      return {"error": e};
     }
   }
 
@@ -159,7 +176,7 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
                 toolbarHeight: 48.0,
                 leading: IconButton(
                   icon: Icon(Icons.cancel_outlined),
-                  onPressed: () {closeDialogue(context, webSocket);},
+                  onPressed: () {closeDialogue(context, widget.local ? null : webSocket);},
                   iconSize: 32,
                 ),
               ),
@@ -170,16 +187,56 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
           } else {
             return Scaffold(
               appBar: AppBar(
-                title: Text("Room: ${widget.code} • ID: $id", style: TextStyle(
+                title: Text("Room: ${widget.code ?? "local"} • ID: $id", style: TextStyle(
                   fontSize: 12
                 )),
                 centerTitle: true,
                 toolbarHeight: 48.0,
                 leading: IconButton(
                   icon: Icon(Icons.cancel_outlined),
-                  onPressed: () {closeDialogue(context, webSocket);},
+                  onPressed: () {closeDialogue(context, widget.local ? null : webSocket);},
                   iconSize: 32,
                 ),
+                actions: [
+                  IconButton(
+                    icon: Icon(Icons.contact_mail),
+                    onPressed: () async {
+                      TextEditingController textController = TextEditingController();
+                      showDialog<String>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Enter a new ID'),
+                            content: TextField(
+                              controller: textController,
+                              decoration: InputDecoration(hintText: 'ID...'),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  // Close the dialog and return null
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  int oldId = id;
+                                  id = int.tryParse(textController.text) ?? id;
+                                  print("set id from $oldId to $id");
+                                  setState(() {});
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    iconSize: 32,
+                  ),
+                ],
               ),
               body: Center(
                 child: StreamBuilder(
@@ -194,15 +251,26 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
                     } else if (!snapshot.hasData) {
                       return Text("Connection lost");
                     }
-                
+
+                    print("received stream data");
                     Map data = snapshot.data;
+
+                    double sizeFactor = 1.75;
+                    double dimensionFactor = 6;
+                    double width = MediaQuery.of(context).size.width / dimensionFactor;
+                    double height = MediaQuery.of(context).size.height / dimensionFactor;
+                    double size = width > height ? height / sizeFactor : width / sizeFactor;
+                    print("size: $size,$width,$height");
+
                     if (data.containsKey("error")) {
                       print("manual error: ${data["error"]}");
                       return Text("Error: ${data["error"]}");
                     }
-                
+
                     int index = id - 1;
-                    return Stoplights(align: false, showNumber: false, height: 100, width: 100, size: 40, data: data, item: data["items"][index], animation: animation, index: index);
+                    print("id: $id");
+                    print("index: $index");
+                    return Stoplights(align: false, showNumber: false, height: height, width: width, size: size, data: data, item: data["items"][index], animation: animation, index: index);
                   },
                 ),
               ),

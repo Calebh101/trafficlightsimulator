@@ -7,6 +7,27 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:trafficlightsimulator/drawer.dart';
 import 'package:trafficlightsimulator/main.dart';
 
+String getNameForState(int state) {
+  switch (state) {
+    case 0:
+      return "Off";
+    case 1:
+      return "Red";
+    case 2:
+      return "Yellow";
+    case 3:
+      return "Green";
+    case 4:
+      return "Flashing red";
+    case 5:
+      return "Flashing yellow";
+    case 6:
+      return "Flashing green";
+    default:
+      return "Unknown";
+  }
+}
+
 Widget buttonBlock(String text, VoidCallback action, {double width = 250, double height = 75}) {
   return Padding(
     padding: const EdgeInsets.all(12.0),
@@ -29,17 +50,22 @@ Widget buttonBlock(String text, VoidCallback action, {double width = 250, double
 }
 
 void closeDialogue(BuildContext context, io.Socket? server) async {
+  print("starting close...");
   if (await showConfirmDialogue(context, "Are you sure?", "Are you sure you want to exit the room?") ?? false) {
     if (server != null) {
       print("closing socket...");
       server.send([jsonEncode({"action": "disconnect"})]);
       server.disconnect();
+    } else {
+      print("not closing socket: server is null: $server");
     }
     print("exiting...");
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HomePage()),
     );
+  } else {
+    print("close cancelled");
   }
 }
 
@@ -131,7 +157,7 @@ Widget ControlRow({required List<Widget> children, String? title}) {
   );
 }
 
-Widget Control({required Widget child, required VoidCallback? function, required BuildContext context}) {
+Widget Control({required Widget child, required VoidCallback? function, required BuildContext context, Widget? button}) {
   double screenWidth = MediaQuery.of(context).size.width;
   double screenHeight = MediaQuery.of(context).size.height;
   double width = screenWidth / 3;
@@ -154,7 +180,14 @@ Widget Control({required Widget child, required VoidCallback? function, required
         ),
       ),
       onPressed: function,
-      child: child,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          child,
+          if (button != null)
+          button,
+        ],
+      ),
     ),
   );
 }
