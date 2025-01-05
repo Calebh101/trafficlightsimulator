@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:localpkg/functions.dart';
 import 'package:localpkg/theme.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/online.dart';
@@ -9,18 +10,22 @@ import 'package:trafficlightsimulator/util.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:trafficlightsimulator/var.dart';
+
 // ------------- TRAFFIC LIGHT SIMULATOR WIDGET TREE -------------
-  // StoplightsContainer - 4 Stoplights
-    // Stoplights - Row of Stoplight
-      // Stoplight - Column of Light/ArrowLight
-        // Light - Container for Circle
-          // Circle - Container for CirclePainter
-            // CirclePainter - CustomPainter with Paint
-        // ArrowLight - Container for Arrow
-          // Arrow - Container for ArrowPainter
-            // ArrowPainter - CustomPainter with TextPainter for Icons.arrow_back
-  // ControlRow - Row of Control
-    // Control - ElevatedButton
+  // Section - contains controls and stoplights
+    // StoplightsContainer - 4 Stoplights
+      // Area - contains Stoplights
+        // Stoplights - Row of Stoplight
+          // Stoplight - Column of Light/ArrowLight
+            // Light - Container for Circle
+              // Circle - Container for CirclePainter
+                // CirclePainter - CustomPainter with Paint
+            // ArrowLight - Container for Arrow
+              // Arrow - Container for ArrowPainter
+                // ArrowPainter - CustomPainter with TextPainter for Icons.arrow_back
+    // ControlRow - Row of Control
+      // Control - ElevatedButton
 // ---------------------------------------------------------------
 
 void main() {
@@ -58,11 +63,18 @@ class _HomePageState extends State<HomePage> {
   String code = '';
 
   @override
+  void initState() {
+    super.initState();
+    showFirstTimeDialogue(context, "Welcome to Traffic Light Simulator!", "$description\n\n$instructions", false);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         title: Text("Select a Mode"),
+        leading: settingsButton(context),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -115,17 +127,14 @@ class _HomePageState extends State<HomePage> {
                           if (formKey.currentState!.validate()) {
                             formKey.currentState!.save();
                             showSnackBar(context, "Finding room...");
-                            http.Response response = await getServerResponse(endpoint: "/api/services/trafficlightsimulator/join?id=$code");
+                            http.Response response = await getServerResponse(endpoint: "/api/services/trafficlightsimulator/join", body: {"id": code});
                             Map? data = json.decode(response.body);
                             int status = response.statusCode;
                             print("received response: $response");
                             if (data != null && status == 200) {
                               String path = data["game"]["path"];
                               showSnackBar(context, "Found room!");
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => GamePage2(code: code, path: path)),
-                              );
+                              navigate(context: context, page: GamePage2(code: code, path: path));
                             } else {
                               if (data != null) {
                                 String error = data["error"];

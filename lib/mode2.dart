@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/online.dart';
 import 'package:trafficlightsimulator/main.dart';
 import 'package:trafficlightsimulator/util.dart';
@@ -198,6 +200,7 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
                   iconSize: 32,
                 ),
                 actions: [
+                  if (widget.local)
                   IconButton(
                     icon: Icon(Icons.contact_mail),
                     onPressed: () async {
@@ -235,6 +238,14 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
                       );
                     },
                     iconSize: 32,
+                  ),
+                  if (widget.code != null)
+                  IconButton(
+                    icon: Icon(Icons.copy),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: widget.code!));
+                      showSnackBar(context, "Code copied!");
+                    },
                   ),
                 ],
               ),

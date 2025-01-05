@@ -3,28 +3,31 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:localpkg/dialogue.dart';
+import 'package:localpkg/functions.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:trafficlightsimulator/drawer.dart';
 import 'package:trafficlightsimulator/main.dart';
+import 'package:trafficlightsimulator/settings.dart';
 
 String getNameForState(int state) {
   switch (state) {
-    case 0:
-      return "Off";
-    case 1:
-      return "Red";
-    case 2:
-      return "Yellow";
-    case 3:
-      return "Green";
-    case 4:
-      return "Flashing red";
-    case 5:
-      return "Flashing yellow";
-    case 6:
-      return "Flashing green";
-    default:
-      return "Unknown";
+    case 0: return "Off";
+    case 1: return "Red";
+    case 2: return "Yellow";
+    case 3: return "Green";
+    case 4: return "Flashing red";
+    case 5: return "Flashing yellow";
+    case 6: return "Flashing green";
+    default: return "ERROR: UNKNOWN STATE: $state";
+  }
+}
+
+String getNameForDirection(int direction) {
+  switch (direction) {
+    case -1: return "Left";
+    case 0: return "Straight";
+    case 1: return "Right";
+    default: return "ERROR: UNKNOWN DIRECTION: $direction";
   }
 }
 
@@ -88,6 +91,16 @@ Widget closeButton(BuildContext context, server) {
     icon: Icon(Icons.cancel_outlined),
     onPressed: () {
       closeDialogue(context, server);
+    },
+    iconSize: 32,
+  );
+}
+
+Widget settingsButton(BuildContext context) {
+  return IconButton(
+    icon: Icon(Icons.settings),
+    onPressed: () {
+      navigate(context: context, page: Settings());
     },
     iconSize: 32,
   );
@@ -188,6 +201,14 @@ Widget Control({required Widget child, required VoidCallback? function, required
           button,
         ],
       ),
+    ),
+  );
+}
+
+Widget Section({Widget? child}) {
+  return Expanded(
+    child: Center(
+      child: child,
     ),
   );
 }

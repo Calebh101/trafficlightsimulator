@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/online.dart';
 import 'package:trafficlightsimulator/drawer.dart';
@@ -36,9 +37,12 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   int stoplightRunCount = 0;
   int initializeControllerRunCount = 0;
   String currentPreset = "initial";
-  String initialPreset = "1/0+3/0Y";
   bool yellowLight = false;
   List customPresets = [];
+
+  int yellowLightTime = 500; // milliseconds - amount of time a yellow light shows
+  int blinkTime = 500;       // milliseconds - interval of a flashing light
+  String initialPreset = "1/0+3/0Y";
 
   io.Socket? server;
   late AnimationController animationController;
@@ -52,7 +56,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
 
     animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 500),
+      duration: Duration(milliseconds: blinkTime),
     )..repeat(reverse: true);
 
     animation = Tween<double>(begin: 0.0, end: 1.0).animate(animationController);
@@ -272,6 +276,16 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
           centerTitle: true,
           toolbarHeight: 48.0,
           leading: closeButton(context, getWebsocket()),
+          actions: [
+            if (widget.mode == 2)
+            IconButton(
+              icon: Icon(Icons.copy),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: data["code"]));
+                showSnackBar(context, "Code copied!");
+              },
+            ),
+          ],
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -383,7 +397,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                           ],
                         ),
                         ControlRow(
-                          title: "Global",
+                          title: "Other",
                           children: [
                             Control(
                               context: context,
@@ -433,75 +447,61 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                                 refresh();
                               }
                             ),
+                            Control(
+                              context: context,
+                              child: Text("Off"),
+                              function: () {
+                                data = applyPreset(preset: "off", data: data, key: "global");
+                                refresh();
+                              }
+                            ),
                           ],
                         ),
+                        //if (customPresets.isNotEmpty)
                         ControlRow(
-                          title: "Custom presets",
-                          children: customPresets.asMap().entries.map<Widget>((entry) {
-                            int index = entry.key;
-                            Map item = entry.value;
+                          title: "Custom",
+                          children: [
+                            ...customPresets.asMap().entries.map<Widget>((entry) {
+                              int index = entry.key;
+                              Map item = entry.value;
 
-                            return Control(
-                              context: context,
-                              function: () {
-                                data = applyPreset(data: data, preset: item["name"], key: "custom", index: index);
-                                refresh();
-                              },
-                              child: Text("${item["name"]}"),
-                              button: IconButton(
-                                icon: Icon(Icons.edit),
-                                onPressed: () async {
-                                  print("editing preset ${item["name"]}");
-                                  Map? result = await editPreset(preset: jsonDecode(jsonEncode(item)), delete: true);
-                                  if (result == null) {
-                                    print("action cancelled");
-                                    return;
-                                  }
-                                  if (result.containsKey("delete")) {
-                                    if (result["delete"] == true) {
-                                      print("deleting preset ${result["name"]}");
-                                      customPresets.removeAt(index);
-                                      refresh();
-                                    } else {
-                                      throw Exception("Unable to delete custom preset ${result["name"]}: result contains key 'delete', but 'delete' is not true.");
-                                    }
-                                  }
-                                  print("editing preset ${result["name"]}");
-                                  customPresets[index] = result;
+                              return Control(
+                                context: context,
+                                function: () {
+                                  data = applyPreset(data: data, preset: item["name"], key: "custom", index: index);
                                   refresh();
                                 },
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        ControlRow(
-                          title: "More",
-                          children: [
+                                child: Text("${item["name"]}"),
+                                button: IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () async {
+                                    print("editing preset ${item["name"]}");
+                                    Map? result = await editPreset(preset: jsonDecode(jsonEncode(item)), delete: true);
+                                    if (result == null) {
+                                      print("action cancelled");
+                                      return;
+                                    }
+                                    if (result.containsKey("delete")) {
+                                      if (result["delete"] == true) {
+                                        print("deleting preset ${result["name"]}");
+                                        customPresets.removeAt(index);
+                                        refresh();
+                                      } else {
+                                        throw Exception("Unable to delete custom preset ${result["name"]}: result contains key 'delete', but 'delete' is not true.");
+                                      }
+                                    }
+                                    print("editing preset ${result["name"]}");
+                                    customPresets[index] = result;
+                                    refresh();
+                                  },
+                                ),
+                              );
+                            }).toList(),
                             Control(
                               context: context,
                               function: () async {
-                                Map? result = await editPreset(delete: false, preset: {"name": "New Preset", "items": {
-                                  "1": {
-                                    "-1": 6,
-                                    "0": 6,
-                                    "1": 6,
-                                  },
-                                  "2": {
-                                    "-1": 6,
-                                    "0": 6,
-                                    "1": 6,
-                                  },
-                                  "3": {
-                                    "-1": 6,
-                                    "0": 6,
-                                    "1": 6,
-                                  },
-                                  "4": {
-                                    "-1": 6,
-                                    "0": 6,
-                                    "1": 6,
-                                  },
-                                }});
+                                Map configS = jsonDecode(jsonEncode(config));
+                                Map? result = await editPreset(delete: false, preset: {"name": "New Preset", "items": configS});
                                 if (result == null) {
                                   print("action cancelled");
                                   return;
@@ -552,39 +552,52 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                       ],
                     ),
                     SizedBox(height: 16),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: List.generate(widget.roads, (index) {
-                          int road = index + 1;
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                Text("Stoplight #$road"),
-                                ...List.generate(3, (index) {
-                                  int dir = index - 1;
-                                  return DropdownButton<int>(
-                                    value: preset["items"]["$road"]["$dir"],
-                                    hint: Text(dir == -1 ? "Left turn" : dir == 0 ? "Straight" : dir == 1 ? "Right turn" : "ERROR: UNKNOWN DIRECTION: $dir"),
-                                    onChanged: (int? newValue) {
-                                      setState(() {
-                                        preset["items"]["$road"]["$dir"] = newValue;
-                                      });
-                                    },
-                                    items: <int>[0, 1, 2, 3, 4, 5, 6]
-                                        .map<DropdownMenuItem<int>>((int value) {
-                                      return DropdownMenuItem<int>(
-                                        value: value,
-                                        child: Text(getNameForState(value)),
-                                      );
-                                    }).toList(),
-                                  );
-                                }),
-                              ],
-                            ),
-                          );
-                        }),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Column(
+                          children: List.generate(widget.roads, (index) {
+                            int road = index + 1;
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                children: [
+                                  Text("Stoplight #$road"),
+                                  ...List.generate(3, (index) {
+                                    int dir = index - 1;
+                                    return Row(
+                                      children: [
+                                        Container(
+                                          width: 80,
+                                          child: Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Text(getNameForDirection(dir)),
+                                          ),
+                                        ),
+                                        DropdownButton<int>(
+                                          value: preset["items"]["$road"]["$dir"],
+                                          hint: Text(getNameForDirection(dir)),
+                                          onChanged: (int? newValue) {
+                                            setState(() {
+                                              preset["items"]["$road"]["$dir"] = newValue;
+                                            });
+                                          },
+                                          items: <int>[0, 1, 2, 3, 4, 5, 6]
+                                              .map<DropdownMenuItem<int>>((int value) {
+                                            return DropdownMenuItem<int>(
+                                              value: value,
+                                              child: Text(getNameForState(value)),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                                ],
+                              ),
+                            );
+                          }),
+                        ),
                       ),
                     ),
                   ],
@@ -621,14 +634,6 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
       },
     );
     return result;
-  }
-
-  Widget Section({Widget? child}) {
-    return Expanded(
-      child: Center(
-        child: child,
-      ),
-    );
   }
 
   Map applyPreset({required String preset, required Map data, String? key, int index = -1}) {
@@ -847,10 +852,10 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     return item;
   }
 
-  void lightCountdown({int milliseconds = 750, required Map data, required int areaIndex, required int itemIndex, required String key, required dynamic value}) async {
+  void lightCountdown({required Map data, required int areaIndex, required int itemIndex, required String key, required dynamic value}) async {
     int currentStoplightRunCount = stoplightRunCount;
-    print("starting yellow light countdown for $areaIndex,$itemIndex for ${milliseconds}ms to $key:$value");
-    await Future.delayed(Duration(milliseconds: milliseconds));
+    print("starting yellow light countdown for $areaIndex,$itemIndex for ${yellowLight}ms to $key:$value");
+    await Future.delayed(Duration(milliseconds: yellowLightTime));
     if (stoplightRunCount == currentStoplightRunCount) {
       yellowLight = false;
       data["items"][areaIndex]["items"][itemIndex][key] = value;
