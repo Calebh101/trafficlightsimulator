@@ -153,7 +153,7 @@ class _SettingsState extends State<Settings> {
                 },
               ),
               Setting(
-                title: "Red Light on Right Only",
+                title: "Red Light on Right-Only",
                 desc: "Allows the right-only stoplight to show a red light.",
                 text: redLightOnRight ? "On" : "Off",
                 action: () async {

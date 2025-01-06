@@ -165,11 +165,11 @@ List<Widget> getLights(int direction, int active, int subactive, double size, An
   List<Widget> dirn1 = List<Widget>.from(dir0) + List<Widget>.from(dirnB);
 
   if (rightRed) {
-    dir2.insert(0, ArrowLight(color: Colors.red, active: subactive == 1, size: size, animation: subactive == 4 ? animation : null));
+    dir2.insert(0, ArrowLight(color: Colors.red, active: subactive == 1, size: size, animation: subactive == 4 ? animation : null, direction: 90));
   }
 
   if (extended) {
-    dir1.insert(3, ArrowLight(color: Colors.red, active: subactive == 1, size: size, animation: subactive == 4 ? animation : null, direction: -90));
+    dir1.insert(3, ArrowLight(color: Colors.red, active: subactive == 1, size: size, animation: subactive == 4 ? animation : null, direction: 90));
     dirn1.insert(3, ArrowLight(color: Colors.red, active: subactive == 1, size: size, animation: subactive == 4 ? animation : null, direction: -90));
   }
 
