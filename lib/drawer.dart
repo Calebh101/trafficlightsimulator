@@ -117,7 +117,6 @@ Widget ArrowLight({required Color color, double direction = 90, double size = 40
 }
 
 Widget Stoplight({int direction = 0, int active = 1, int subactive = 0, double size = 30, Animation<double>? animation, bool rightRed = false, bool extended = false}) {
-  print("drawer settings: $rightRed,$extended");
   if (direction <= 2 && direction >= -2) {
     return Padding(
       padding: const EdgeInsets.all(4.0),

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:localpkg/override.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:localpkg/dialogue.dart';
@@ -130,9 +132,9 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     }
   }
 
-  void refreshPreset(Map data) {
+  Future<void> refreshPreset(Map data) async {
     print("refreshing preset $currentPreset...");
-    data = applyPreset(preset: currentPreset, data: data);
+    data = await applyPreset(preset: currentPreset, data: data);
     refresh();
   }
 
@@ -156,9 +158,9 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     setState(() {});
   }
 
-  void setupSingleplayer() {
+  void setupSingleplayer() async {
     data = initialData(widget.roads);
-    data = applyPreset(preset: initialPreset, data: data);
+    data = await applyPreset(preset: initialPreset, data: data);
     refresh();
   }
 
@@ -278,7 +280,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   io.Socket? getWebsocket() {
     dynamic websocket;
     websocket = widget.mode == 1 ? null : server;
-    print("$mode,${websocket.runtimeType}");
+    print("${getFetchInfo()["mode"]},${websocket.runtimeType}");
     return websocket;
   }
 
@@ -323,6 +325,14 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                 showSnackBar(context, "Code copied!");
               },
             ),
+            if (kDebugMode)
+            IconButton(
+              icon: Icon(Icons.pages),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: jsonEncode(data)));
+                showSnackBar(context, "Data copied!");
+              },
+            ),
           ],
         ),
         body: Padding(
@@ -346,32 +356,32 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                             Control(
                               context: context,
                               child: Text("#1 and #3 straight"),
-                              function: () {
-                                data = applyPreset(preset: "1/0+3/0Y", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "1/0+3/0Y", data: data);
                                 refresh();
                               },
                             ),
                             Control(
                               context: context,
                               child: Text("#2 and #4 straight"),
-                              function: () {
-                                data = applyPreset(preset: "2/0+4/0Y", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "2/0+4/0Y", data: data);
                                 refresh();
                               },
                             ),
                             Control(
                               context: context,
                               child: Text("#1 and #3 straight (no left turn yield)"),
-                              function: () {
-                                data = applyPreset(preset: "1/0+3/0", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "1/0+3/0", data: data);
                                 refresh();
                               },
                             ),
                             Control(
                               context: context,
                               child: Text("#2 and #4 straight (no left turn yield)"),
-                              function: () {
-                                data = applyPreset(preset: "2/0+4/0", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "2/0+4/0", data: data);
                                 refresh();
                               },
                             ),
@@ -384,16 +394,16 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                             Control(
                               context: context,
                               child: Text("#1 and #3 left"),
-                              function: () {
-                                data = applyPreset(preset: "1/-2+3/-2", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "1/-2+3/-2", data: data);
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("#2 and #4 left"),
-                              function: () {
-                                data = applyPreset(preset: "2/-2+4/-2", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "2/-2+4/-2", data: data);
                                 refresh();
                               }
                             ),
@@ -406,32 +416,32 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                             Control(
                               context: context,
                               child: Text("#1 straight and left"),
-                              function: () {
-                                data = applyPreset(preset: "1/0+-2", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "1/0+-2", data: data);
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("#2 straight and left"),
-                              function: () {
-                                data = applyPreset(preset: "2/0+-2", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "2/0+-2", data: data);
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("#3 straight and left"),
-                              function: () {
-                                data = applyPreset(preset: "3/0+-2", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "3/0+-2", data: data);
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("#4 straight and left"),
-                              function: () {
-                                data = applyPreset(preset: "4/0+-2", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "4/0+-2", data: data);
                                 refresh();
                               }
                             ),
@@ -444,32 +454,32 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                             Control(
                               context: context,
                               child: Text("#2 and #3 straight"),
-                              function: () {
-                                data = applyPreset(preset: "2/0+3/0Y", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "2/0+3/0Y", data: data);
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("#2 and #3 straight (no left turn yield)"),
-                              function: () {
-                                data = applyPreset(preset: "2/0+3/0", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "2/0+3/0", data: data);
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("#1 left"),
-                              function: () {
-                                data = applyPreset(preset: "1/-2", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "1/-2", data: data);
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("#3 straight and left"),
-                              function: () {
-                                data = applyPreset(preset: "3/0+-2", data: data);
+                              function: () async {
+                                data = await applyPreset(preset: "3/0+-2", data: data);
                                 refresh();
                               },
                             ),
@@ -481,56 +491,56 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                             Control(
                               context: context,
                               child: Text("Solid green"),
-                              function: () {
-                                data = applyPreset(preset: "solidgreen", data: data, key: "global");
+                              function: () async {
+                                data = await applyPreset(preset: "solidgreen", data: data, key: "global");
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("Solid yellow"),
-                              function: () {
-                                data = applyPreset(preset: "solidyellow", data: data, key: "global");
+                              function: () async {
+                                data = await applyPreset(preset: "solidyellow", data: data, key: "global");
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("Solid red"),
-                              function: () {
-                                data = applyPreset(preset: "solidred", data: data, key: "global");
+                              function: () async {
+                                data = await applyPreset(preset: "solidred", data: data, key: "global");
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("Flashing green"),
-                              function: () {
-                                data = applyPreset(preset: "flashgreen", data: data, key: "global");
+                              function: () async {
+                                data = await applyPreset(preset: "flashgreen", data: data, key: "global");
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("Flashing yellow"),
-                              function: () {
-                                data = applyPreset(preset: "flashyellow", data: data, key: "global");
+                              function: () async {
+                                data = await applyPreset(preset: "flashyellow", data: data, key: "global");
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("Flashing red"),
-                              function: () {
-                                data = applyPreset(preset: "flashred", data: data, key: "global");
+                              function: () async {
+                                data = await applyPreset(preset: "flashred", data: data, key: "global");
                                 refresh();
                               }
                             ),
                             Control(
                               context: context,
                               child: Text("Off"),
-                              function: () {
-                                data = applyPreset(preset: "off", data: data, key: "global");
+                              function: () async {
+                                data = await applyPreset(preset: "off", data: data, key: "global");
                                 refresh();
                               }
                             ),
@@ -545,8 +555,8 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
 
                               return Control(
                                 context: context,
-                                function: () {
-                                  data = applyPreset(data: data, preset: item["name"], key: "custom", index: index);
+                                function: () async {
+                                  data = await applyPreset(data: data, preset: item["name"], key: "custom", index: index);
                                   refresh();
                                 },
                                 child: Text("${item["name"]}"),
@@ -740,7 +750,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     return result;
   }
 
-  Map applyPreset({required String preset, required Map data, String? key, int index = -1}) {
+  Future<Map> applyPreset({required String preset, required Map data, String? key, int index = -1}) async {
     key ??= widget.roads.toString();
     print("applying preset $preset for $key[$index]");
     currentPreset = preset;
@@ -768,9 +778,9 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
       print("using area[${area["id"]}]");
       Map values = presetS["${area["id"]}"];
       List items = area["items"];
-      items = setStoplightProperty(key: "subactive", value: values["-1"], items: items, direction: -1, areaIndex: i); // left
-      items = setStoplightProperty(key: "active", value: values["0"], items: items, direction: 0, areaIndex: i); // straight
-      items = setStoplightProperty(key: "subactive", value: values["1"], items: items, direction: 1, areaIndex: i); // right
+      items = await setStoplightProperty(key: "subactive", value: values["-1"], items: items, direction: -1, areaIndex: i); // left
+      items = await setStoplightProperty(key: "active", value: values["0"], items: items, direction: 0, areaIndex: i); // straight
+      items = await setStoplightProperty(key: "subactive", value: values["1"], items: items, direction: 1, areaIndex: i); // right
       area["items"] = items;
     }
 
@@ -956,6 +966,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   }
 
   Future<Map> lightCountdownHandler({required Map data, required int areaIndex, required int itemIndex, required String key, required dynamic value}) async {
+    await Future.delayed(Duration(milliseconds: 1));
     Map item = data["items"][areaIndex]["items"][itemIndex];
     print("setting up light countdown for $areaIndex,$itemIndex to $key:$value");
     if ((item[key] == 3 || item[key] == 5) && (value == 1)) {
@@ -971,7 +982,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     return item;
   }
 
-  void lightCountdown({required Map data, required int areaIndex, required int itemIndex, required String key, required dynamic value}) async {
+  Future<void> lightCountdown({required Map data, required int areaIndex, required int itemIndex, required String key, required dynamic value}) async {
     int currentStoplightRunCount = stoplightRunCount;
     print("starting yellow light countdown for $areaIndex,$itemIndex for ${yellowLight}ms to $key:$value");
     await Future.delayed(Duration(milliseconds: yellowLightTime));
@@ -981,10 +992,11 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     } else {
       print("yellow light countdown cancelled: $stoplightRunCount,$currentStoplightRunCount");
     }
+    await Future.delayed(Duration(milliseconds: 2));
     refresh();
   }
 
-  List setStoplightProperty({int? direction, int? index, required String key, required dynamic value, required List items, required int areaIndex}) {
+  Future<List> setStoplightProperty({int? direction, int? index, required String key, required dynamic value, required List items, required int areaIndex}) async {
     if (direction != null) {
       print("setting property based on direction: $direction");
       for (var i = 0; i < items.length; i++) {
@@ -992,15 +1004,15 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
         print("checking property for $areaIndex,$i ($direction,${item["direction"]})");
         if (direction == 0) {
           if (item['direction'] == direction || item['direction'] == direction - 1 || item['direction'] == direction + 1) { // directions -1 to 1 (straight)
-            lightCountdownHandler(data: data, areaIndex: areaIndex, itemIndex: i, key: key, value: value);
+            await lightCountdownHandler(data: data, areaIndex: areaIndex, itemIndex: i, key: key, value: value);
           }
         } else if (direction == -1) {
           if (item['direction'] == direction || item['direction'] == direction - 1) { // directions -1 to -2 (left)
-            lightCountdownHandler(data: data, areaIndex: areaIndex, itemIndex: i, key: key, value: value);
+            await lightCountdownHandler(data: data, areaIndex: areaIndex, itemIndex: i, key: key, value: value);
           }
         } else if (direction == 1) {
           if (item['direction'] == direction || item['direction'] == direction + 1) { // directions 1 to 2 (right)
-            lightCountdownHandler(data: data, areaIndex: areaIndex, itemIndex: i, key: key, value: value);
+            await lightCountdownHandler(data: data, areaIndex: areaIndex, itemIndex: i, key: key, value: value);
           }
         } else {
           throw Exception("Invalid direction in setStoplightProperty.");
