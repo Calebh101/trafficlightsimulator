@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/online.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trafficlightsimulator/drawer.dart';
-import 'package:trafficlightsimulator/main.dart';
 import 'package:trafficlightsimulator/util.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:trafficlightsimulator/var.dart';
@@ -20,7 +20,7 @@ class GamePage1 extends StatefulWidget {
   const GamePage1({
     super.key,
     required this.mode,
-    this.roads = 4,
+    required this.roads,
     this.path = "/",
     this.code = "xxxxxxxxx",
   });
@@ -40,9 +40,10 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   bool yellowLight = false;
   List customPresets = [];
 
-  int yellowLightTime = 500; // milliseconds - amount of time a yellow light shows
-  int blinkTime = 500;       // milliseconds - interval of a flashing light
+  int yellowLightTime = 1000; // milliseconds - amount of time a yellow light shows
+  int blinkTime = 500; // milliseconds - interval of a flashing light
   String initialPreset = "1/0+3/0Y";
+  String initialPreset3 = "2/0+3/0";
 
   io.Socket? server;
   late AnimationController animationController;
@@ -52,7 +53,9 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
 
   @override
   void initState() {
-    customPresets = [];
+    if (widget.roads == 3) {
+      initialPreset = initialPreset3;
+    }
 
     animationController = AnimationController(
       vsync: this,
@@ -67,7 +70,30 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
       setupSingleplayer();
     }
 
+    getCustomPresets();
     super.initState();
+  }
+
+  Future<void> saveCustomPresets() async {
+    String key = "customPresets${widget.roads}";
+    print("customPresets: save: $key");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString(key, json.encode(customPresets));
+    print("successfully saved custom presets");
+  }
+
+  Future<void> getCustomPresets() async {
+    String key = "customPresets${widget.roads}";
+    print("customPresets: get: $key");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? result = prefs.getString(key);
+    if (result != null) {
+      customPresets = json.decode(result);
+      print("successfully got custom presets");
+      refresh();
+    } else {
+      print("no custom presets saved");
+    }
   }
 
   void uninitializeServer() {
@@ -120,7 +146,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   }
 
   void setupSingleplayer() {
-    data = initialData();
+    data = initialData(widget.roads);
     data = applyPreset(preset: initialPreset, data: data);
     refresh();
   }
@@ -223,7 +249,8 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
 
       final idS = message["id"];
       print("id: $idS (ignored)");
-      data = {"id": id, "code": code, "items": initialData()["items"]};
+      List items = initialData(widget.roads)["items"];
+      data = {"id": id, "code": code, "items": items};
       refresh();
     } catch (e) {
       print("setup error: $e");
@@ -237,10 +264,9 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   }
 
   io.Socket? getWebsocket() {
-    //await serverInitialization.future;
     dynamic websocket;
     websocket = widget.mode == 1 ? null : server;
-    print("$mode,$websocket");
+    print("$mode,${websocket.runtimeType}");
     return websocket;
   }
 
@@ -299,8 +325,9 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                 Section(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
-                    child: widget.roads == 4 ? Column(
+                    child: Column(
                       children: [
+                        if (widget.roads == 4)
                         ControlRow(
                           title: "Straight",
                           children: [
@@ -338,6 +365,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                             ),
                           ]
                         ),
+                        if (widget.roads == 4)
                         ControlRow(
                           title: "Left",
                           children: [
@@ -359,6 +387,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                             ),
                           ],
                         ),
+                        if (widget.roads == 4)
                         ControlRow(
                           title: "Straight & Left",
                           children: [
@@ -393,6 +422,36 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                                 data = applyPreset(preset: "4/0+-2", data: data);
                                 refresh();
                               }
+                            ),
+                          ],
+                        ),
+                        if (widget.roads == 3)
+                        ControlRow(
+                          title: "Main",
+                          children: [
+                            Control(
+                              context: context,
+                              child: Text("#2 and #3 straight"),
+                              function: () {
+                                data = applyPreset(preset: "2/0+3/0Y", data: data);
+                                refresh();
+                              }
+                            ),
+                            Control(
+                              context: context,
+                              child: Text("#1 left"),
+                              function: () {
+                                data = applyPreset(preset: "1/-2", data: data);
+                                refresh();
+                              }
+                            ),
+                            Control(
+                              context: context,
+                              child: Text("#3 straight and left"),
+                              function: () {
+                                data = applyPreset(preset: "3/0+-2", data: data);
+                                refresh();
+                              },
                             ),
                           ],
                         ),
@@ -457,7 +516,6 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                             ),
                           ],
                         ),
-                        //if (customPresets.isNotEmpty)
                         ControlRow(
                           title: "Custom",
                           children: [
@@ -492,6 +550,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                                     }
                                     print("editing preset ${result["name"]}");
                                     customPresets[index] = result;
+                                    saveCustomPresets();
                                     refresh();
                                   },
                                 ),
@@ -500,22 +559,28 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                             Control(
                               context: context,
                               function: () async {
-                                Map configS = jsonDecode(jsonEncode(config));
-                                Map? result = await editPreset(delete: false, preset: {"name": "New Preset", "items": configS});
-                                if (result == null) {
-                                  print("action cancelled");
-                                  return;
+                                try {
+                                  Map configS = jsonDecode(jsonEncode(config));
+                                  Map? result = await editPreset(delete: false, preset: {"name": "New Preset", "items": configS});
+                                  if (result == null) {
+                                    print("action cancelled");
+                                    return;
+                                  }
+                                  print("adding preset ${result["name"]}");
+                                  customPresets.add(result);
+                                  saveCustomPresets();
+                                  refresh();
+                                } catch (e) {
+                                  print("new custom preset error: $e");
+                                  showSnackBar(context, "There was an unexpected error creating a new custom preset. Maybe it didn't finish setting up.");
                                 }
-                                print("adding preset ${result["name"]}");
-                                customPresets.add(result);
-                                refresh();
                               },
                               child: Text("New preset"),
                             ),
                           ],
                         ),
                       ],
-                    ) : widget.roads == 3 ? Column() : Text("Error: invalid road count: ${widget.roads}"),
+                    ),
                   ),
                 ),
               ],
@@ -565,7 +630,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                                   Text("Stoplight #$road"),
                                   ...List.generate(3, (index) {
                                     int dir = index - 1;
-                                    return Row(
+                                    Widget row = Row(
                                       children: [
                                         Container(
                                           width: 80,
@@ -592,6 +657,25 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                                         ),
                                       ],
                                     );
+                                    print("output check in progress: ${widget.roads},null,null");
+                                    if (widget.roads == 4) {
+                                      print("output check successful: ${widget.roads},true,null");
+                                      return row;
+                                    } else {
+                                      print("output check in progress: ${widget.roads},false,null");
+                                      print(data);
+                                      List? allowed = data["items"].firstWhere((item) => item['id'] == road)["dir"];
+                                      if (allowed == null) {
+                                        throw Exception("allowed is null");
+                                      }
+                                      if (allowed.contains(dir)) {
+                                        print("output check successful: ${widget.roads},false,true");
+                                        return row;
+                                      } else {
+                                        print("output check failed: ${widget.roads},false,false");
+                                        return SizedBox.shrink();
+                                      }
+                                    }
                                   }),
                                 ],
                               ),
@@ -647,19 +731,22 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
       if (index >= 0) {
         presetS = customPresets[index]["items"];
       } else {
-        throw Exception("Invalid index for custom preset: $index");
+        throw Exception("applyPreset: Invalid index for custom preset: $index");
       }
     } else {
       presetS = presets[key][preset];
     }
 
+    print("initializing preset merge...");
     List areas = data["items"];
     config = presetS;
     stoplightRunCount++;
 
+    print("starting preset merge...");
     for (var i = 0; i < areas.length; i++) {
       var area = areas[i];
-      Map values = presetS[/*key == "custom" ? "items" :*/ "${area["id"]}"];
+      print("using area[${area["id"]}]");
+      Map values = presetS["${area["id"]}"];
       List items = area["items"];
       items = setStoplightProperty(key: "subactive", value: values["-1"], items: items, direction: -1, areaIndex: i); // left
       items = setStoplightProperty(key: "active", value: values["0"], items: items, direction: 0, areaIndex: i); // straight
@@ -733,23 +820,29 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                         setState(() {});
                       },
                       itemBuilder: (BuildContext context) {
+                        List allowed = data["items"].firstWhere((item) => item['id'] == light)["allowed"];
                         return [
+                          if (allowed.contains(-2))
                           PopupMenuItem(
                             value: -2,
                             child: Text('Left only'),
                           ),
+                          if (allowed.contains(-1))
                           PopupMenuItem(
                             value: -1,
                             child: Text('Left/straight'),
                           ),
+                          if (allowed.contains(0))
                           PopupMenuItem(
                             value: 0,
                             child: Text('Straight only'),
                           ),
+                          if (allowed.contains(1))
                           PopupMenuItem(
                             value: 1,
                             child: Text('Right/straight'),
                           ),
+                          if (allowed.contains(2))
                           PopupMenuItem(
                             value: 2,
                             child: Text('Right only'),
@@ -823,6 +916,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
           },
           child: Container(
             child: Stoplights(
+              roads: widget.roads,
               height: height,
               width: width,
               size: stoplightSize,

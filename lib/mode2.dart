@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/online.dart';
-import 'package:trafficlightsimulator/main.dart';
+import 'package:trafficlightsimulator/var.dart';
 import 'package:trafficlightsimulator/util.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -87,7 +87,7 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
   Future<Map> setup() async {
     if (widget.local) {
       print("DEBUG: using local data");
-      Map data = initialData();
+      Map data = initialData(4);
       delayData(data: data);
       return {"id": debugId};
     } else {
@@ -278,10 +278,24 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
                       return Text("Error: ${data["error"]}");
                     }
 
+                    print("initializing...");
                     int index = id - 1;
+                    int length = data["items"].length;
+
                     print("id: $id");
                     print("index: $index");
-                    return Stoplights(align: false, showNumber: false, height: height, width: width, size: size, data: data, item: data["items"][index], animation: animation, index: index);
+                    print("length: $length");
+
+                    print("checking...");
+                    if (length < index) {
+                      print("stoplight availability failed: $index,$length");
+                      return Text("Error: This match is not set up to handle stoplight #$id.");
+                    } else {
+                      print("stoplight availability passed: $index,$length");
+                    }
+
+                    print("outputting...");
+                    return Stoplights(align: false, showNumber: false, height: height, width: width, size: size, data: data, item: data["items"][index], animation: animation, index: index, roads: data["roads"]);
                   },
                 ),
               ),

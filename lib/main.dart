@@ -65,6 +65,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    print("beta,debug: $beta,$debug");
     showFirstTimeDialogue(context, "Welcome to Traffic Light Simulator!", "$description\n\n$instructions", false);
   }
 
@@ -82,8 +83,12 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               buttonBlock("Create a Room", () async {
+                int? roads = await selectRoads(context);
+                if (roads == null) {
+                  return;
+                }
                 showSnackBar(context, "Finding match...");
-                Map data = await getServerJsonData("/api/services/trafficlightsimulator/new");
+                Map data = await getServerData(endpoint: "/api/services/trafficlightsimulator/new", debug: debug);
                 print("data: $data");
                 if (data.containsKey("error")) {
                   print("new room issue: ${data["error"]}");
@@ -93,10 +98,7 @@ class _HomePageState extends State<HomePage> {
                 String path = data["path"];
                 String code = data["code"];
                 showSnackBar(context, "Found match!");
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => GamePage1(mode: 2, code: code, path: path)),
-                );
+                navigate(context: context, page: GamePage1(mode: 2, roads: roads, code: code, path: path));
               }),
               Form(
                 key: formKey,
@@ -127,10 +129,10 @@ class _HomePageState extends State<HomePage> {
                           if (formKey.currentState!.validate()) {
                             formKey.currentState!.save();
                             showSnackBar(context, "Finding room...");
-                            http.Response response = await getServerResponse(endpoint: "/api/services/trafficlightsimulator/join", body: {"id": code});
+                            http.Response response = await getServerResponse(endpoint: "/api/services/trafficlightsimulator/join", body: {"id": code}, debug: debug);
                             Map? data = json.decode(response.body);
                             int status = response.statusCode;
-                            print("received response: $response");
+                            print("received response: ${response.runtimeType}[${response.statusCode}]");
                             if (data != null && status == 200) {
                               String path = data["game"]["path"];
                               showSnackBar(context, "Found room!");
@@ -152,19 +154,20 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              buttonBlock("Singleplayer", () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => GamePage1(mode: 1)),
-                );
+              buttonBlock("Singleplayer", () async {
+                int? roads = await selectRoads(context);
+                if (roads == null) {
+                  return;
+                }
+                navigate(context: context, page: GamePage1(mode: 1, roads: roads));
               }),
               if (kDebugMode)
-                buttonBlock("DEBUG: SINGLEPLAYER RECEIVER", () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => GamePage2(local: true)),
-                  );
-                })
+              buttonBlock("DEBUG: SINGLEPLAYER RECEIVER", () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => GamePage2(local: true)),
+                );
+              })
             ],
           ),
         ),
@@ -177,129 +180,56 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-Map initialData() {
-  return {
-    "items": [
-      {
-        "id": 1,
-        "items": [
-          {
-            "direction": -2,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": -1,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 0,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 1,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 2,
-            "active": 6,
-            "subactive": 6,
-          },
-        ],
-      },
-      {
-        "id": 2,
-        "items": [
-          {
-            "direction": -2,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": -1,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 0,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 1,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 2,
-            "active": 6,
-            "subactive": 6,
-          },
-        ],
-      },
-      {
-        "id": 3,
-        "items": [
-          {
-            "direction": -2,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": -1,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 0,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 1,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 2,
-            "active": 6,
-            "subactive": 6,
-          },
-        ],
-      },
-      {
-        "id": 4,
-        "items": [
-          {
-            "direction": -2,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": -1,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 0,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 1,
-            "active": 6,
-            "subactive": 6,
-          },
-          {
-            "direction": 2,
-            "active": 6,
-            "subactive": 6,
-          },
-        ],
-      },
-    ],
-  };
+Future<int?> selectRoads(BuildContext context) {
+  int? roads = 4;
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder( // Use StatefulBuilder to manage state inside the dialog.
+        builder: (BuildContext context, StateSetter setState) {
+          return AlertDialog(
+            title: const Text("Select Type"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Choose a stoplight type:"),
+                const SizedBox(height: 16),
+                DropdownButton<int>(
+                  value: roads,
+                  isExpanded: true,
+                  items: <int>[3, 4]
+                      .map((int value) {
+                    return DropdownMenuItem<int>(
+                      value: value,
+                      child: Text(getNameForRoads(value)),
+                    );
+                  }).toList(),
+                  onChanged: (int? newValue) {
+                    setState(() {
+                      roads = newValue;
+                    });
+                  },
+                  hint: const Text("Select an option"),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog.
+                },
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(roads); // Close the dialog.
+                },
+                child: const Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
 }

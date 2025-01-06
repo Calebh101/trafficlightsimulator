@@ -31,6 +31,13 @@ String getNameForDirection(int direction) {
   }
 }
 
+String getNameForRoads(int roads) {
+  switch (roads) {
+    case 3 || 4: return "$roads-Way Intersection";
+    default: return "ERROR: UNKNOWN ROADS COUNT: $roads";
+  }
+}
+
 Widget buttonBlock(String text, VoidCallback action, {double width = 250, double height = 75}) {
   return Padding(
     padding: const EdgeInsets.all(12.0),
@@ -106,8 +113,11 @@ Widget settingsButton(BuildContext context) {
   );
 }
 
-Widget Stoplights({bool showNumber = true, bool align = true, required double height, required double width, required double size, required Map data, required Map item, required int index, required Animation<double> animation, Widget? underChild}) {
+Widget Stoplights({required int roads, bool showNumber = true, bool align = true, required double height, required double width, required double size, required Map data, required Map item, required int index, required Animation<double> animation, Widget? underChild}) {
   List alignments = [Alignment.bottomCenter, Alignment.centerLeft, Alignment.topCenter, Alignment.centerRight];
+  if (roads == 3) {
+    alignments = [Alignment.bottomCenter, Alignment.centerLeft, Alignment.centerRight];
+  }
   return Area(showNumber: showNumber, height: height, width: width, size: size, alignment: align ? alignments[index] : Alignment.center, id: item["id"], children: item["items"].asMap().entries.map<Widget>((entry) {
     Map item = entry.value;
     return Column(
