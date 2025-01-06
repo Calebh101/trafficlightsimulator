@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 class CirclePainter extends CustomPainter {
@@ -117,7 +116,8 @@ Widget ArrowLight({required Color color, double direction = 90, double size = 40
   return Arrow(size: size, color: color, direction: direction, animation: animation, filled: active);
 }
 
-Widget Stoplight({int direction = 0, int active = 1, int subactive = 0, double size = 30, Animation<double>? animation}) {
+Widget Stoplight({int direction = 0, int active = 1, int subactive = 0, double size = 30, Animation<double>? animation, bool rightRed = false, bool extended = false}) {
+  print("drawer settings: $rightRed,$extended");
   if (direction <= 2 && direction >= -2) {
     return Padding(
       padding: const EdgeInsets.all(4.0),
@@ -132,7 +132,7 @@ Widget Stoplight({int direction = 0, int active = 1, int subactive = 0, double s
         child: Padding(
           padding: EdgeInsets.all(size / 10),
           child: Column(
-            children: getLights(direction, active, subactive, size, animation),
+            children: getLights(direction, active, subactive, size, animation, rightRed, extended),
           ),
         ),
       ),
@@ -142,7 +142,7 @@ Widget Stoplight({int direction = 0, int active = 1, int subactive = 0, double s
   }
 }
 
-List<Widget> getLights(int direction, int active, int subactive, double size, Animation<double>? animation) {
+List<Widget> getLights(int direction, int active, int subactive, double size, Animation<double>? animation, bool rightRed, bool extended) {
   List<Widget> dir0 = [
     Light(color: Colors.red, active: active == 1, size: size, animation: active == 4 ? animation : null),
     Light(color: Colors.yellow, active: active == 2, size: size, animation: active == 5 ? animation : null),
@@ -164,6 +164,15 @@ List<Widget> getLights(int direction, int active, int subactive, double size, An
 
   List<Widget> dir1 = List<Widget>.from(dir0) + List<Widget>.from(dir2);
   List<Widget> dirn1 = List<Widget>.from(dir0) + List<Widget>.from(dirnB);
+
+  if (rightRed) {
+    dir2.insert(0, ArrowLight(color: Colors.red, active: subactive == 1, size: size, animation: subactive == 4 ? animation : null));
+  }
+
+  if (extended) {
+    dir1.insert(3, ArrowLight(color: Colors.red, active: subactive == 1, size: size, animation: subactive == 4 ? animation : null, direction: -90));
+    dirn1.insert(3, ArrowLight(color: Colors.red, active: subactive == 1, size: size, animation: subactive == 4 ? animation : null, direction: -90));
+  }
 
   switch (direction) {
     case 0: return dir0;

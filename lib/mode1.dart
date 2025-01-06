@@ -38,6 +38,8 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   int initializeControllerRunCount = 0;
   String currentPreset = "initial";
   bool yellowLight = false;
+  bool rightRed = false;
+  bool extendedStoplights = false;
   List customPresets = [];
 
   String initialPreset = "1/0+3/0Y";
@@ -77,6 +79,9 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     print("getting settings...");
     SharedPreferences prefs = await SharedPreferences.getInstance();
     yellowLightTime = prefs.getInt("yellowLightTimer") ?? yellowLightTime;
+    rightRed = prefs.getBool("rightRed") ?? rightRed;
+    extendedStoplights = prefs.getBool("extended") ?? extendedStoplights;
+    print("mode1 settings: $rightRed,$extendedStoplights");
     refresh();
   }
 
@@ -142,7 +147,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     print("refreshing...");
     if (widget.mode == 2 && data != prevData) {
       print("sending data... (${widget.mode},${data == prevData})");
-      Map dataS = {"items": data["items"], "roads": widget.roads};
+      Map dataS = {"items": data["items"], "roads": widget.roads, "rightRed": rightRed, "extended": extendedStoplights};
       server?.send([jsonEncode(dataS)]);
       prevData = Map.from(data.map((key, value) => MapEntry(key, value is Map ? Map.from(value) : value)));
     } else {
@@ -802,7 +807,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Stoplight(size: 30, direction: itemS["direction"], active: itemS["active"], subactive: itemS["subactive"], animation: animation),
+                                  Stoplight(size: 30, direction: itemS["direction"], active: itemS["active"], subactive: itemS["subactive"], animation: animation, rightRed: rightRed, extended: extendedStoplights),
                                   IconButton(
                                     icon: Icon(Icons.remove),
                                     color: Colors.red,
@@ -941,6 +946,8 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
               item: data["items"][index],
               index: index,
               animation: animation,
+              rightRed: rightRed,
+              extended: extendedStoplights,
             ),
           ),
         );

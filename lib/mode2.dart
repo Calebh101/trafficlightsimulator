@@ -298,7 +298,7 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
                     }
 
                     print("outputting...");
-                    return Stoplights(align: false, showNumber: false, height: height, width: width, size: size, data: data, item: data["items"][index], animation: animation, index: index, roads: roads);
+                    return Stoplights(align: false, showNumber: false, height: height, width: width, size: size, data: data, item: data["items"][index], animation: animation, index: index, roads: roads, extended: data["extended"], rightRed: data["rightRed"]);
                   },
                 ),
               ),

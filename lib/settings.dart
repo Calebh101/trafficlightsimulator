@@ -13,18 +13,29 @@ class Settings extends StatefulWidget {
 
 class _SettingsState extends State<Settings> {
   int yellowTimer = yellowLightTime;
+  bool redLightOnRight = false;
+  bool extendedStoplights = false;
 
   Future<void> loadSettings() async {
     print("getting settings...");
     SharedPreferences prefs = await SharedPreferences.getInstance();
     yellowTimer = prefs.getInt("yellowLightTimer") ?? yellowLightTime;
+    redLightOnRight = prefs.getBool("rightRed") ?? redLightOnRight;
+    extendedStoplights = prefs.getBool("extended") ?? extendedStoplights;
     setState(() {});
   }
 
-  Future<void> setSettingInt(String key, dynamic value) async {
+  Future<void> setSettingInt(String key, int value) async {
     print("setting setting (int) $key...");
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setInt(key, value);
+    setState(() {});
+  }
+
+  Future<void> setSettingBool(String key, bool value) async {
+    print("setting setting (bool) $key...");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool(key, value);
     setState(() {});
   }
 
@@ -126,12 +137,40 @@ class _SettingsState extends State<Settings> {
                   );
                 },
               ),
+              Setting(
+                title: "Extended Stoplights",
+                desc: "Extends straight-right and straight-left stoplights to include red lights.",
+                text: extendedStoplights ? "On" : "Off",
+                action: () async {
+                  bool? result = await showConfirmDialogue(context, "Do you want to enable Extended Stoplights?", "This extends straight-right and straight-left stoplights to include red lights.");
+                  if (result == null) {
+                    print("action cancelled");
+                    return;
+                  }
+                  extendedStoplights = result;
+                  setSettingBool("extended", result);
+                },
+              ),
+              Setting(
+                title: "Red Light on Right Only",
+                desc: "Allows the right-only stoplight to show a red light.",
+                text: redLightOnRight ? "On" : "Off",
+                action: () async {
+                  bool? result = await showConfirmDialogue(context, "Do you want to enable Red Light on Right Only?", "This allows the right-only stoplight to show a red light.");
+                  if (result == null) {
+                    print("action cancelled");
+                    return;
+                  }
+                  redLightOnRight = result;
+                  setSettingBool("rightRed", result);
+                },
+              ),
               SettingTitle(title: "Instructions"),
               Setting(
                 title: "How to Use",
                 desc: "Shows a dialogue explaining Traffic Light Simulator.",
                 action: () {
-                  showAlertDialogue(context, "Welcome to Traffic Light Simulator", "$description\n\n$instructions", false, {"show": false});
+                  showAlertDialogue(context, "Welcome to Traffic Light Simulator!", "$description\n\n$instructions", false, {"show": false});
                 }
               ),
               AboutSettings(context: context, version: version, beta: beta, about: description),

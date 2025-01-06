@@ -113,7 +113,7 @@ Widget settingsButton(BuildContext context) {
   );
 }
 
-Widget Stoplights({required int roads, bool showNumber = true, bool align = true, required double height, required double width, required double size, required Map data, required Map item, required int index, required Animation<double> animation, Widget? underChild}) {
+Widget Stoplights({required int roads, bool showNumber = true, bool align = true, required double height, required double width, required double size, required Map data, required Map item, required int index, required Animation<double> animation, Widget? underChild, bool rightRed = false, bool extended = false}) {
   List alignments = [Alignment.bottomCenter, Alignment.centerLeft, Alignment.topCenter, Alignment.centerRight];
   if (roads == 3) {
     alignments = [Alignment.bottomCenter, Alignment.centerLeft, Alignment.centerRight];
@@ -122,7 +122,7 @@ Widget Stoplights({required int roads, bool showNumber = true, bool align = true
     Map item = entry.value;
     return Column(
       children: [
-        Stoplight(size: size, direction: item["direction"], active: item["active"], subactive: item["subactive"], animation: animation),
+        Stoplight(size: size, direction: item["direction"], active: item["active"], subactive: item["subactive"], animation: animation, rightRed: rightRed, extended: extended),
         if (underChild != null)
         underChild,
       ],
