@@ -40,8 +40,6 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   bool yellowLight = false;
   List customPresets = [];
 
-  int yellowLightTime = 1000; // milliseconds - amount of time a yellow light shows
-  int blinkTime = 500; // milliseconds - interval of a flashing light
   String initialPreset = "1/0+3/0Y";
   String initialPreset3 = "2/0+3/0";
 
@@ -70,8 +68,16 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
       setupSingleplayer();
     }
 
+    loadSettings();
     getCustomPresets();
     super.initState();
+  }
+
+  Future<void> loadSettings() async {
+    print("getting settings...");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    yellowLightTime = prefs.getInt("yellowLightTimer") ?? yellowLightTime;
+    refresh();
   }
 
   Future<void> saveCustomPresets() async {
@@ -136,7 +142,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     print("refreshing...");
     if (widget.mode == 2 && data != prevData) {
       print("sending data... (${widget.mode},${data == prevData})");
-      Map dataS = {"items": data["items"]};
+      Map dataS = {"items": data["items"], "roads": widget.roads};
       server?.send([jsonEncode(dataS)]);
       prevData = Map.from(data.map((key, value) => MapEntry(key, value is Map ? Map.from(value) : value)));
     } else {
@@ -173,6 +179,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   }
 
   void connect(String path, String code) async {
+    String host = getFetchInfo(debug: debug)["host"];
     String url = "http://$host:5000";
     StreamController? controller = StreamController.broadcast();
     try {
@@ -434,6 +441,14 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                               child: Text("#2 and #3 straight"),
                               function: () {
                                 data = applyPreset(preset: "2/0+3/0Y", data: data);
+                                refresh();
+                              }
+                            ),
+                            Control(
+                              context: context,
+                              child: Text("#2 and #3 straight (no left turn yield)"),
+                              function: () {
+                                data = applyPreset(preset: "2/0+3/0", data: data);
                                 refresh();
                               }
                             ),
@@ -762,7 +777,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     int index = light - 1;
     Map item = json.decode(json.encode(data["items"][index]));
     print("customizing light $light($index)");
-    print("${item.runtimeType},${data["items"].runtimeType},${data["items"][index].runtimeType}");
+    print("item types: ${item.runtimeType},${data["items"].runtimeType},${data["items"][index].runtimeType}");
 
     showDialog(
       context: context,
@@ -804,51 +819,53 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                         ),
                       ),
                     ),
-                    PopupMenuButton(
-                      child: Icon(
-                        Icons.add,
-                        color: Colors.green,
-                        size: 60,
+                    ClipOval(
+                      child: PopupMenuButton(
+                        child: Icon(
+                          Icons.add,
+                          color: Colors.green,
+                          size: 60,
+                        ),
+                        onSelected: (value) {
+                          print('adding stoplight: $value');
+                          item["items"] = insertItem(item["items"], {
+                            "direction": value,
+                            "active": 6,
+                            "subactive": 0,
+                          });
+                          setState(() {});
+                        },
+                        itemBuilder: (BuildContext context) {
+                          List allowed = data["items"].firstWhere((item) => item['id'] == light)["allowed"] ?? [-2,-1,0,1,2];
+                          return [
+                            if (allowed.contains(-2))
+                            PopupMenuItem(
+                              value: -2,
+                              child: Text('Left only'),
+                            ),
+                            if (allowed.contains(-1))
+                            PopupMenuItem(
+                              value: -1,
+                              child: Text('Left/straight'),
+                            ),
+                            if (allowed.contains(0))
+                            PopupMenuItem(
+                              value: 0,
+                              child: Text('Straight only'),
+                            ),
+                            if (allowed.contains(1))
+                            PopupMenuItem(
+                              value: 1,
+                              child: Text('Right/straight'),
+                            ),
+                            if (allowed.contains(2))
+                            PopupMenuItem(
+                              value: 2,
+                              child: Text('Right only'),
+                            ),
+                          ];
+                        },
                       ),
-                      onSelected: (value) {
-                        print('adding stoplight: $value');
-                        item["items"] = insertItem(item["items"], {
-                          "direction": value,
-                          "active": 6,
-                          "subactive": 0,
-                        });
-                        setState(() {});
-                      },
-                      itemBuilder: (BuildContext context) {
-                        List allowed = data["items"].firstWhere((item) => item['id'] == light)["allowed"];
-                        return [
-                          if (allowed.contains(-2))
-                          PopupMenuItem(
-                            value: -2,
-                            child: Text('Left only'),
-                          ),
-                          if (allowed.contains(-1))
-                          PopupMenuItem(
-                            value: -1,
-                            child: Text('Left/straight'),
-                          ),
-                          if (allowed.contains(0))
-                          PopupMenuItem(
-                            value: 0,
-                            child: Text('Straight only'),
-                          ),
-                          if (allowed.contains(1))
-                          PopupMenuItem(
-                            value: 1,
-                            child: Text('Right/straight'),
-                          ),
-                          if (allowed.contains(2))
-                          PopupMenuItem(
-                            value: 2,
-                            child: Text('Right only'),
-                          ),
-                        ];
-                      },
                     ),
                   ],
                 ),
@@ -931,13 +948,14 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     );
   }
 
-  Map lightCountdownHandler({required Map data, required int areaIndex, required int itemIndex, required String key, required dynamic value}) {
+  Future<Map> lightCountdownHandler({required Map data, required int areaIndex, required int itemIndex, required String key, required dynamic value}) async {
     Map item = data["items"][areaIndex]["items"][itemIndex];
     print("setting up light countdown for $areaIndex,$itemIndex to $key:$value");
     if ((item[key] == 3 || item[key] == 5) && (value == 1)) {
       yellowLight = true;
       item[key] = 2;
     }
+    await Future.delayed(Duration(milliseconds: 1));
     if (yellowLight) {
       lightCountdown(data: data, areaIndex: areaIndex, itemIndex: itemIndex, key: key, value: value);
     } else {

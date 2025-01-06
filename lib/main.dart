@@ -66,6 +66,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     print("beta,debug: $beta,$debug");
+    print("fetch info: ${getFetchInfo(debug: debug)}");
     showFirstTimeDialogue(context, "Welcome to Traffic Light Simulator!", "$description\n\n$instructions", false);
   }
 

@@ -293,8 +293,8 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: a60fd142682152bf686c2e44e16d45141cff4483
-      url: "https://github.com/Calebh101/localpkg-flutter.git"
+      resolved-ref: b1f818bc1b648f7334ee2acbfc63d4abd1b425bc
+      url: "https://github.com/Calebh101/localpkg-flutter"
     source: git
     version: "1.0.0"
   logging:

@@ -91,6 +91,7 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
       delayData(data: data);
       return {"id": debugId};
     } else {
+      String host = getFetchInfo(debug: debug)["host"];
       String path = widget.path!;
       String url = "http://$host:5000";
       try {
@@ -281,10 +282,12 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
                     print("initializing...");
                     int index = id - 1;
                     int length = data["items"].length;
+                    int roads = data["roads"];
 
                     print("id: $id");
                     print("index: $index");
                     print("length: $length");
+                    print("roads: $roads");
 
                     print("checking...");
                     if (length < index) {
@@ -295,7 +298,7 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
                     }
 
                     print("outputting...");
-                    return Stoplights(align: false, showNumber: false, height: height, width: width, size: size, data: data, item: data["items"][index], animation: animation, index: index, roads: data["roads"]);
+                    return Stoplights(align: false, showNumber: false, height: height, width: width, size: size, data: data, item: data["items"][index], animation: animation, index: index, roads: roads);
                   },
                 ),
               ),
