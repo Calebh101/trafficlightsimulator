@@ -8,10 +8,10 @@ import 'package:localpkg/override.dart';
 import 'package:trafficlightsimulator/mode1.dart';
 import 'package:trafficlightsimulator/mode2.dart';
 import 'package:trafficlightsimulator/util.dart';
+import 'package:trafficlightsimulator/var.dart';
+
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-import 'package:trafficlightsimulator/var.dart';
 
 // ------------- TRAFFIC LIGHT SIMULATOR WIDGET TREE -------------
   // Section - contains controls and stoplights
