@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 String version = "0.0.0A";
 bool beta = true;
 bool debug = true;

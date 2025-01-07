@@ -113,24 +113,22 @@ Widget settingsButton(BuildContext context) {
   );
 }
 
-Widget Stoplights({required int roads, bool showNumber = true, bool align = true, required double height, required double width, required double size, required Map data, required Map item, required int index, required Animation<double> animation, Widget? underChild, bool rightRed = false, bool extended = false}) {
+Widget Stoplights({required int roads, bool showNumber = true, bool align = true, required double height, required double width, required double size, required Map data, required Map item, required int index, required Animation<double> animation, bool rightRed = false, bool extended = false, VoidCallback? function}) {
   List alignments = [Alignment.bottomCenter, Alignment.centerLeft, Alignment.topCenter, Alignment.centerRight];
   if (roads == 3) {
     alignments = [Alignment.bottomCenter, Alignment.centerLeft, Alignment.centerRight];
   }
-  return Area(showNumber: showNumber, height: height, width: width, size: size, alignment: align ? alignments[index] : Alignment.center, id: item["id"], children: item["items"].asMap().entries.map<Widget>((entry) {
+  return Area(showNumber: showNumber, height: height, width: width, size: size, function: function, alignment: align ? alignments[index] : Alignment.center, id: item["id"], children: item["items"].asMap().entries.map<Widget>((entry) {
     Map item = entry.value;
     return Column(
       children: [
         Stoplight(size: size, direction: item["direction"], active: item["active"], subactive: item["subactive"], animation: animation, rightRed: rightRed, extended: extended),
-        if (underChild != null)
-        underChild,
       ],
     );
   }).toList());
 }
 
-Widget Area({required bool showNumber, required double width, required double height, required double size, required int id, required List<Widget> children, required Alignment? alignment}) {
+Widget Area({required bool showNumber, required double width, required double height, required double size, required int id, required List<Widget> children, required Alignment? alignment, VoidCallback? function}) {
   Widget container = Container(
     width: width,
     height: height,
@@ -142,8 +140,19 @@ Widget Area({required bool showNumber, required double width, required double he
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (showNumber)
-              Text("#$id"),
+            Row(
+              children: [
+                if (showNumber)
+                  Text("#$id"),
+                if (function != null)
+                IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: function,
+                  color: Colors.white,
+                  iconSize: 24,
+                ),
+              ],
+            ),
             Row(
               children: children,
             ),

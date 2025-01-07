@@ -289,8 +289,9 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     print("building scaffold...");
 
     double size = 20;
-    double boxWidth = MediaQuery.of(context).size.width / 3;
-    double boxHeight = ((MediaQuery.of(context).size.height / 2) - 48) / 3;
+    double factor = 2.5;
+    double boxWidth = MediaQuery.of(context).size.width / factor;
+    double boxHeight = ((MediaQuery.of(context).size.height / 2) - 48) / factor;
 
     if (data.containsKey("await")) {
       return Scaffold(body: Center(child: CircularProgressIndicator()), appBar: AppBar(
@@ -845,7 +846,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                           print('adding stoplight: $value');
                           item["items"] = insertItem(item["items"], {
                             "direction": value,
-                            "active": 6,
+                            "active": 0,
                             "subactive": 0,
                           });
                           setState(() {});
@@ -897,7 +898,12 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                   onPressed: () {
                     print("saving stoplight $index");
                     data["items"][index] = Map<String, Object>.from(item.map((key, value) => MapEntry(key, value as Object)));
-                    refreshPreset(data);
+                    try {
+                      refreshPreset(data);
+                    } catch (e) {
+                      print("customizeLights.refreshPreset error: $e");
+                      refresh();
+                    }
                     Navigator.of(context).pop();
                   },
                 ),
@@ -942,24 +948,20 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
       children: data["items"].asMap().entries.map<Widget>((entry) {
         Map item = entry.value;
         int index = entry.key;
-        return GestureDetector(
-          onTap: () {
+        return Stoplights(
+          roads: widget.roads,
+          height: height,
+          width: width,
+          size: stoplightSize,
+          data: data,
+          item: data["items"][index],
+          index: index,
+          animation: animation,
+          rightRed: rightRed,
+          extended: extendedStoplights,
+          function: () {
             customizeLights(data, item["id"]);
           },
-          child: Container(
-            child: Stoplights(
-              roads: widget.roads,
-              height: height,
-              width: width,
-              size: stoplightSize,
-              data: data,
-              item: data["items"][index],
-              index: index,
-              animation: animation,
-              rightRed: rightRed,
-              extended: extendedStoplights,
-            ),
-          ),
         );
       }).toList(),
     );

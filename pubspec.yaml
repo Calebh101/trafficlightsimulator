@@ -34,7 +34,7 @@ dependencies:
   http: ^1.2.2
   localpkg:
     git:
-      url: https://github.com/Calebh101/localpkg-flutter
+      url: https://github.com/Calebh101/localpkg-flutter.git
       ref: main
   shared_preferences: ^2.3.5
   socket_io_client: ^3.0.2
