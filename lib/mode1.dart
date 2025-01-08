@@ -288,7 +288,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     print("building scaffold...");
 
-    double size = 20;
+    double size = 15;
     double factor = 2.5;
     double boxWidth = MediaQuery.of(context).size.width / factor;
     double boxHeight = ((MediaQuery.of(context).size.height / 2) - 48) / factor;
@@ -318,20 +318,20 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
           toolbarHeight: 48.0,
           leading: closeButton(context, getWebsocket()),
           actions: [
+            if (kDebugMode && widget.mode == 2)
+            IconButton(
+              icon: Icon(Icons.code),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: jsonEncode(data)));
+                showSnackBar(context, "Data copied!");
+              },
+            ),
             if (widget.mode == 2)
             IconButton(
               icon: Icon(Icons.copy),
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: data["code"]));
                 showSnackBar(context, "Code copied!");
-              },
-            ),
-            if (kDebugMode)
-            IconButton(
-              icon: Icon(Icons.pages),
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: jsonEncode(data)));
-                showSnackBar(context, "Data copied!");
               },
             ),
           ],

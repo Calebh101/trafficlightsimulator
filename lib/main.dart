@@ -69,6 +69,7 @@ class _HomePageState extends State<HomePage> {
     print("beta,debug: $beta,$debug");
     print("fetch info: ${getFetchInfo(debug: debug)}");
     showFirstTimeDialogue(context, "Welcome to Traffic Light Simulator!", "$description\n\n$instructions", false);
+    serverlaunch(context: context, service: "TrafficLightSimulator");
   }
 
   @override
@@ -105,28 +106,38 @@ class _HomePageState extends State<HomePage> {
               Form(
                 key: formKey,
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Flexible(
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Join a Room',
-                            border: OutlineInputBorder(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: 200,
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty || !isValid(value)) {
-                              return 'Enter a valid code.';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            code = value ?? '';
-                          },
+                          child: TextFormField(
+                            decoration: InputDecoration(
+                              labelText: 'Join a Room',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty || !isValid(value)) {
+                                return 'Enter a valid code.';
+                              }
+                              return null;
+                            },
+                            onSaved: (value) {
+                              code = value ?? '';
+                            },
+                          ),
                         ),
                       ),
                       SizedBox(width: 20),
                       buttonBlock("Join", () async {
+                        if (await checkDisabled()) {
+                          showSnackBar(context, "The server is currently not available. Please try again later.");
+                          return;
+                        }
                         try {
                           if (formKey.currentState!.validate()) {
                             formKey.currentState!.save();
@@ -164,7 +175,7 @@ class _HomePageState extends State<HomePage> {
                 navigate(context: context, page: GamePage1(mode: 1, roads: roads));
               }),
               if (kDebugMode)
-              buttonBlock("DEBUG: SINGLEPLAYER RECEIVER", () {
+              buttonBlock("Receiver", () {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => GamePage2(local: true)),

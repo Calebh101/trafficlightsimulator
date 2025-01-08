@@ -89,6 +89,9 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
     if (widget.local) {
       print("DEBUG: using local data");
       Map data = initialData(4);
+      data["roads"] = 4;
+      data["rightRed"] = true;
+      data["extended"] = true;
       delayData(data: data);
       return {"id": debugId};
     } else {
@@ -170,6 +173,10 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
         } else if (snapshot.hasError) {
           return Scaffold(
             body: Center(child: Text("Error: ${snapshot.error}")),
+            appBar: AppBar(
+              toolbarHeight: 48.0,
+              leading: closeButton(context, null),
+            ),
           );
         } else if (snapshot.hasData) {
           Map data = snapshot.data!;
