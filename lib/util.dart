@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/functions.dart';
-import 'package:localpkg/override.dart';
+import 'package:localpkg/logging.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:trafficlightsimulator/drawer.dart';
 import 'package:trafficlightsimulator/main.dart';

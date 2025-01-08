@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:localpkg/override.dart';
+import 'package:localpkg/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,7 +32,7 @@ class GamePage1 extends StatefulWidget {
 }
 
 class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMixin {
-  Map data = {"await": "loading"};
+  Map data = {};
   Map prevData = {};
   Map config = {};
   int id = 0;
@@ -58,6 +58,9 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     if (widget.roads == 3) {
       initialPreset = initialPreset3;
     }
+
+    print("current data: $data");
+    data = {"await": "loading"};
 
     animationController = AnimationController(
       vsync: this,
@@ -155,7 +158,11 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
     } else {
       print("not sending data: ${widget.mode},${data == prevData}");
     }
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    } else {
+      warn("refresh called when not mounted");
+    }
   }
 
   void setupSingleplayer() async {
@@ -186,6 +193,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
   }
 
   void connect(String path, String code) async {
+    print("starting connect...");
     String host = getFetchInfo(debug: debug)["host"];
     String url = "http://$host:5000";
     StreamController? controller = StreamController.broadcast();
@@ -200,13 +208,16 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
         io.OptionBuilder()
           .setPath(path)
           .setTransports(['websocket'])
+          .disableAutoConnect()
           .build(),
       );
-      print("connecting server...");
+      server?.io.options?['path'] = path;
+      print("connecting server... (${server?.io.options?.entries})");
       if (server!.connected) {
-        throw Exception("server is not ready for initialization: server is connected");
+        print("server is not ready for connection: server is already connected");
+        return;
       }
-      server?.connect();
+      server!.connect();
       serverInitialization.complete();
       print("server initialized: ${server?.io.uri}, ($server)");
 

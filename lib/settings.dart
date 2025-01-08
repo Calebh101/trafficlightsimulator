@@ -3,7 +3,7 @@ import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trafficlightsimulator/var.dart';
-import 'package:localpkg/override.dart';
+import 'package:localpkg/logging.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});

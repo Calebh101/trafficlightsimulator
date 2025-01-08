@@ -4,7 +4,7 @@ import 'package:localpkg/functions.dart';
 import 'package:localpkg/theme.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/online.dart';
-import 'package:localpkg/override.dart';
+import 'package:localpkg/logging.dart';
 import 'package:trafficlightsimulator/mode1.dart';
 import 'package:trafficlightsimulator/mode2.dart';
 import 'package:trafficlightsimulator/util.dart';
