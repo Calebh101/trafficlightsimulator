@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/online.dart';
-import 'package:localpkg/logging.dart';
-import 'package:trafficlightsimulator/var.dart';
-import 'package:trafficlightsimulator/util.dart';
+import 'package:localpkg/logger.dart';
+import 'package:scoreboardsimulator/var.dart';
+import 'package:scoreboardsimulator/util.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class GamePage2 extends StatefulWidget {
@@ -88,7 +88,7 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
   Future<Map> setup() async {
     if (widget.local) {
       print("DEBUG: using local data");
-      Map data = initialData(4);
+      Map data = initialData();
       data["roads"] = 4;
       data["rightRed"] = true;
       data["extended"] = true;
@@ -307,7 +307,7 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
                     }
 
                     print("outputting...");
-                    return Stoplights(align: false, showNumber: false, height: height, width: width, size: size, data: data, item: data["items"][index], animation: animation, index: index, roads: roads, extended: data["extended"], rightRed: data["rightRed"]);
+                    return Text("Hello");
                   },
                 ),
               ),

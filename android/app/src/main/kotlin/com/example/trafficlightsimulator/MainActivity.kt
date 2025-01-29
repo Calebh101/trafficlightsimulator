@@ -1,4 +1,4 @@
-package com.calebh101.trafficlightsimulator
+package com.calebh101.scoreboardsimulator
 
 import io.flutter.embedding.android.FlutterActivity
 

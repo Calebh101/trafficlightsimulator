@@ -1,4 +1,4 @@
-# trafficlightsimulator
+# scoreboardsimulator
 
 A new Flutter project.
 

@@ -3,40 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/functions.dart';
-import 'package:localpkg/logging.dart';
+import 'package:localpkg/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:trafficlightsimulator/drawer.dart';
-import 'package:trafficlightsimulator/main.dart';
-import 'package:trafficlightsimulator/settings.dart';
-
-String getNameForState(int state) {
-  switch (state) {
-    case 0: return "Off";
-    case 1: return "Red";
-    case 2: return "Yellow";
-    case 3: return "Green";
-    case 4: return "Flashing red";
-    case 5: return "Flashing yellow";
-    case 6: return "Flashing green";
-    default: return "ERROR: UNKNOWN STATE: $state";
-  }
-}
-
-String getNameForDirection(int direction) {
-  switch (direction) {
-    case -1: return "Left";
-    case 0: return "Straight";
-    case 1: return "Right";
-    default: return "ERROR: UNKNOWN DIRECTION: $direction";
-  }
-}
-
-String getNameForRoads(int roads) {
-  switch (roads) {
-    case 3 || 4: return "$roads-Way Intersection";
-    default: return "ERROR: UNKNOWN ROADS COUNT: $roads";
-  }
-}
+import 'package:scoreboardsimulator/main.dart';
+import 'package:scoreboardsimulator/settings.dart';
 
 Widget buttonBlock(String text, VoidCallback action, {double width = 250, double height = 75}) {
   return Padding(
@@ -45,7 +15,7 @@ Widget buttonBlock(String text, VoidCallback action, {double width = 250, double
         style: ElevatedButton.styleFrom(
           minimumSize: Size(width, height),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)), // Square edges
+            borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
         ),
         onPressed: action,
@@ -61,7 +31,7 @@ Widget buttonBlock(String text, VoidCallback action, {double width = 250, double
 
 void closeDialogue(BuildContext context, io.Socket? server) async {
   print("starting close...");
-  if (await showConfirmDialogue(context, "Are you sure?", "Are you sure you want to exit the room?") ?? false) {
+  if (await showConfirmDialogue(context: context, title: "Are you sure?", description: "Are you sure you want to exit the room?") ?? false) {
     if (server != null) {
       print("closing socket...");
       server.send([jsonEncode({"action": "disconnect"})]);
@@ -79,17 +49,26 @@ void closeDialogue(BuildContext context, io.Socket? server) async {
   }
 }
 
-String getDesc(String error) {
-  switch (error) {
-    case 'too many clients':
-      return "There are too many players in this session.";
-    case 'too many connections':
-      return "Too many people are using the service right now.";
-    case 'no manager':
-      return "The game creator has left the room.";
-    default:
-      print("unknown error: $error");
-      return error;
+String getDesc(dynamic error) {
+  if (error == null || error == "null") {
+    return "no error";
+  }
+  if (error is String) {
+    switch (error) {
+      case 'too many clients':
+        return "There are too many players in this session.";
+      case 'too many connections':
+        return "Too many people are using the service right now.";
+      case 'no manager':
+        return "The game creator has left the room.";
+      default:
+        print("unknown error: $error");
+        return error;
+    }
+  } else if (error is Error) {
+    return "${error.runtimeType}: $error";
+  } else {
+    return 'ManualError: Unknown error type: ${error.runtimeType}: $error';
   }
 }
 
@@ -111,65 +90,6 @@ Widget settingsButton(BuildContext context) {
     },
     iconSize: 32,
   );
-}
-
-Widget Stoplights({required int roads, bool showNumber = true, bool align = true, required double height, required double width, required double size, required Map data, required Map item, required int index, required Animation<double> animation, bool rightRed = false, bool extended = false, VoidCallback? function}) {
-  List alignments = [Alignment.bottomCenter, Alignment.centerLeft, Alignment.topCenter, Alignment.centerRight];
-  if (roads == 3) {
-    alignments = [Alignment.bottomCenter, Alignment.centerLeft, Alignment.centerRight];
-  }
-  return Area(showNumber: showNumber, height: height, width: width, size: size, function: function, alignment: align ? alignments[index] : Alignment.center, id: item["id"], children: item["items"].asMap().entries.map<Widget>((entry) {
-    Map item = entry.value;
-    return Column(
-      children: [
-        Stoplight(size: size, direction: item["direction"], active: item["active"], subactive: item["subactive"], animation: animation, rightRed: rightRed, extended: extended),
-      ],
-    );
-  }).toList());
-}
-
-Widget Area({required bool showNumber, required double width, required double height, required double size, required int id, required List<Widget> children, required Alignment? alignment, VoidCallback? function}) {
-  Widget container = Container(
-    width: width,
-    height: height,
-    child: OverflowBox(
-      maxWidth: double.infinity,
-      maxHeight: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                if (showNumber)
-                  Text("#$id"),
-                if (function != null)
-                IconButton(
-                  icon: Icon(Icons.edit),
-                  onPressed: function,
-                  color: Colors.white,
-                  iconSize: 24,
-                ),
-              ],
-            ),
-            Row(
-              children: children,
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  if (alignment != null) {
-    return Align(
-      alignment: alignment, // Center
-      child: container,
-    );
-  } else {
-    return container;
-  }
 }
 
 Widget ControlRow({required List<Widget> children, String? title}) {
@@ -230,4 +150,118 @@ Widget Section({Widget? child}) {
       child: child,
     ),
   );
+}
+
+class Scoreboard {
+  Map data;
+  double size;
+  int mode;
+  bool showBonus;
+
+  Scoreboard({
+    required this.data,
+    this.size = 1,
+    this.mode = 1,
+    this.showBonus = true,
+  });
+
+  Widget _typeHandler({required String type}) {
+    switch (type) {
+      case 'basketball':
+        return Basketball();
+      default:
+        return _typeHandler(type: "basketball");
+    }
+  }
+
+  Widget build() {
+    return IntrinsicHeight(
+      child: Container(
+        width: 500 * size,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.all(Radius.circular(15 * size)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Center(
+            child: _typeHandler(type: data["type"] ?? "baseball"),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget Basketball() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: BasketballItem(home: true, name: "Panthers", points: 103),
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  Text("Period"),
+                  TextNumber(2),
+                ],
+              ),
+            ),
+            Expanded(
+              child: BasketballItem(home: false, name: "Scissors", points: 103),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                children: [
+                  Text("Time"),
+                  TextTime(2),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget BasketballItem({required String name, required double points, bool home = false, int bonus = 2}) {
+    return Padding(
+      padding: EdgeInsets.all(8.0 * size),
+      child: Column(
+        children: [
+          Text(name),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextNumber(points, pad: 2),
+              SizedBox(width: 10 * size),
+              Column(
+                children: [
+                  Text(showBonus ? (bonus == 1 ? "B" : (bonus == 2 ? "B+" : "")) : ""),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget TextDigit(String text, double fontSize) {
+    return Text(text, style: TextStyle(fontSize: fontSize * size, fontFamily: "Digital7"));
+  }
+
+  Widget TextNumber(num number, {int pad = 0, double fontSize = 42}) {
+    return TextDigit(cleanNumber(number).padLeft(pad, '0'), fontSize);
+  }
+
+  Widget TextTime(int ms, {double fontSize = 42}) {
+    return TextDigit(formatDuration(ms: ms), fontSize);
+  }
 }
