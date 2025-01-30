@@ -262,6 +262,6 @@ class Scoreboard {
   }
 
   Widget TextTime(int ms, {double fontSize = 42}) {
-    return TextDigit(formatDuration(ms: ms), fontSize);
+    return TextDigit(formatDuration(ms, mode: 2), fontSize);
   }
 }
