@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/online.dart';
-import 'package:localpkg/logging.dart';
+import 'package:localpkg/logger.dart';
 import 'package:trafficlightsimulator/var.dart';
 import 'package:trafficlightsimulator/util.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -88,12 +88,8 @@ class _GamePage2State extends State<GamePage2> with SingleTickerProviderStateMix
   Future<Map> setup() async {
     if (widget.local) {
       print("DEBUG: using local data");
-      Map data = initialData(4);
-      data["roads"] = 4;
-      data["rightRed"] = true;
-      data["extended"] = true;
-      delayData(data: data);
-      return {"id": debugId};
+      error("DEBUG: RECEIVER mode is deprecated and no longer functions properly.");
+      return {"id": 3};
     } else {
       String host = getFetchInfo(debug: debug)["host"];
       String path = widget.path!;

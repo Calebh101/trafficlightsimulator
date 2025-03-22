@@ -4,7 +4,7 @@ import 'package:localpkg/functions.dart';
 import 'package:localpkg/theme.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/online.dart';
-import 'package:localpkg/logging.dart';
+import 'package:localpkg/logger.dart';
 import 'package:trafficlightsimulator/mode1.dart';
 import 'package:trafficlightsimulator/mode2.dart';
 import 'package:trafficlightsimulator/util.dart';
@@ -91,7 +91,7 @@ class _HomePageState extends State<HomePage> {
                   return;
                 }
                 showSnackBar(context, "Finding match...");
-                Map data = await getServerData(endpoint: "/api/services/trafficlightsimulator/new", debug: debug);
+                Map data = await getServerData(endpoint: "/api/services/trafficlightsimulator/new", method: "POST");
                 print("data: $data");
                 if (data.containsKey("error")) {
                   print("new room issue: ${data["error"]}");
@@ -142,7 +142,7 @@ class _HomePageState extends State<HomePage> {
                           if (formKey.currentState!.validate()) {
                             formKey.currentState!.save();
                             showSnackBar(context, "Finding room...");
-                            http.Response response = await getServerResponse(endpoint: "/api/services/trafficlightsimulator/join", body: {"id": code}, debug: debug);
+                            http.Response response = await getServerResponse(endpoint: "/api/services/trafficlightsimulator/join", body: {"id": code}, method: "POST");
                             Map? data = json.decode(response.body);
                             int status = response.statusCode;
                             print("received response: ${response.runtimeType}[${response.statusCode}]");

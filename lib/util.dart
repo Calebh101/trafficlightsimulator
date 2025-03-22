@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/functions.dart';
-import 'package:localpkg/logging.dart';
+import 'package:localpkg/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:trafficlightsimulator/drawer.dart';
 import 'package:trafficlightsimulator/main.dart';
@@ -61,7 +61,7 @@ Widget buttonBlock(String text, VoidCallback action, {double width = 250, double
 
 void closeDialogue(BuildContext context, io.Socket? server) async {
   print("starting close...");
-  if (await showConfirmDialogue(context, "Are you sure?", "Are you sure you want to exit the room?") ?? false) {
+  if (await showConfirmDialogue(context: context, title: "Are you sure?", description: "Are you sure you want to exit the room?") ?? false) {
     if (server != null) {
       print("closing socket...");
       server.send([jsonEncode({"action": "disconnect"})]);

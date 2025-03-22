@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:localpkg/logging.dart';
+import 'package:localpkg/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -747,7 +747,7 @@ class _GamePage1State extends State<GamePage1> with SingleTickerProviderStateMix
                 TextButton(
                   child: Text("Delete"),
                   onPressed: () async {
-                    if (await showConfirmDialogue(context, "Are you sure?", "Are you sure you want to delete your custom preset, ${preset["name"]}?") ?? false) {
+                    if (await showConfirmDialogue(context: context, title: "Are you sure?", description: "Are you sure you want to delete your custom preset, ${preset["name"]}?") ?? false) {
                       showSnackBar(context, "Deleted preset ${preset["name"]}");
                       Navigator.of(context).pop({"delete": true});
                     }

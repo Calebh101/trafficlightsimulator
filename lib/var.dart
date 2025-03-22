@@ -1,8 +1,8 @@
-//import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 String version = "0.0.0A";
 bool beta = true;
-bool debug = true;
+bool debug = kDebugMode;
 
 int yellowLightTime = 1000; // milliseconds
 int blinkTime = 500; // milliseconds

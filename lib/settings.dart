@@ -3,7 +3,7 @@ import 'package:localpkg/dialogue.dart';
 import 'package:localpkg/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trafficlightsimulator/var.dart';
-import 'package:localpkg/logging.dart';
+import 'package:localpkg/logger.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -143,7 +143,7 @@ class _SettingsState extends State<Settings> {
                 desc: "Extends straight-right and straight-left stoplights to include red lights.",
                 text: extendedStoplights ? "On" : "Off",
                 action: () async {
-                  bool? result = await showConfirmDialogue(context, "Do you want to enable Extended Stoplights?", "This extends straight-right and straight-left stoplights to include red lights.");
+                  bool? result = await showConfirmDialogue(context: context, title: "Do you want to enable Extended Stoplights?", description: "This extends straight-right and straight-left stoplights to include red lights.");
                   if (result == null) {
                     print("action cancelled");
                     return;
@@ -157,7 +157,7 @@ class _SettingsState extends State<Settings> {
                 desc: "Allows the right-only stoplight to show a red light.",
                 text: redLightOnRight ? "On" : "Off",
                 action: () async {
-                  bool? result = await showConfirmDialogue(context, "Do you want to enable Red Light on Right Only?", "This allows the right-only stoplight to show a red light.");
+                  bool? result = await showConfirmDialogue(context: context, title: "Do you want to enable Red Light on Right Only?", description: "This allows the right-only stoplight to show a red light.");
                   if (result == null) {
                     print("action cancelled");
                     return;
@@ -180,7 +180,7 @@ class _SettingsState extends State<Settings> {
                 title: "Reset 3-Way Custom Presets",
                 desc: "Resets all custom presets for 3-way intersection stoplights. This cannot be undone.",
                 action: () async {
-                  if (await showConfirmDialogue(context, "Are you sure?", "Are you sure you want to reset all custom presets for 3-way intersection stoplights? This cannot be undone.") ?? false) {
+                  if (await showConfirmDialogue(context: context, title: "Are you sure?", description: "Are you sure you want to reset all custom presets for 3-way intersection stoplights? This cannot be undone.") ?? false) {
                     clearSetting("customPresets3");
                     showSnackBar(context, "Custom presets (3-way intersection) cleared!");
                   }
@@ -190,7 +190,7 @@ class _SettingsState extends State<Settings> {
                 title: "Reset 4-Way Custom Presets",
                 desc: "Resets all custom presets for 4-way intersection stoplights. This cannot be undone.",
                 action: () async {
-                  if (await showConfirmDialogue(context, "Are you sure?", "Are you sure you want to reset all custom presets for 4-way intersection stoplights? This cannot be undone.") ?? false) {
+                  if (await showConfirmDialogue(context: context, title: "Are you sure?", description: "Are you sure you want to reset all custom presets for 4-way intersection stoplights? This cannot be undone.") ?? false) {
                     clearSetting("customPresets4");
                     showSnackBar(context, "Custom presets (4-way intersection) cleared!");
                   }
@@ -200,7 +200,7 @@ class _SettingsState extends State<Settings> {
                 title: "Reset All Custom Presets",
                 desc: "Resets all custom presets for all stoplights. This cannot be undone.",
                 action: () async {
-                  if (await showConfirmDialogue(context, "Are you sure?", "Are you sure you want to reset all custom presets? This cannot be undone.") ?? false) {
+                  if (await showConfirmDialogue(context: context, title: "Are you sure?", description: "Are you sure you want to reset all custom presets? This cannot be undone.") ?? false) {
                     clearSetting("customPresets3");
                     clearSetting("customPresets4");
                     showSnackBar(context, "Custom presets cleared!");
@@ -211,7 +211,7 @@ class _SettingsState extends State<Settings> {
                 title: "Reset All Settings and Data",
                 desc: "Resets all settings, data, and custom presets. This cannot be undone.",
                 action: () async {
-                  if (await showConfirmDialogue(context, "Are you sure?", "Are you sure you want to reset all settings and data? This includes all custom presets. This cannot be undone.") ?? false) {
+                  if (await showConfirmDialogue(context: context, title: "Are you sure?", description: "Are you sure you want to reset all settings and data? This includes all custom presets. This cannot be undone.") ?? false) {
                     clearSettings();
                     showSnackBar(context, "All settings and data cleared!");
                   }
